@@ -27,7 +27,7 @@
             color: #fff;
         }
 
-        /* REGISTRO / LOGIN */
+        /* PANTALLA DE REGISTRO / LOGIN */
         #loginOverlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(11, 16, 13, 0.95); z-index: 1000;
@@ -69,43 +69,24 @@
         }
         .eco-image-wrapper img { width: 100%; height: auto; display: block; border-radius: 12px; }
 
-        /* ÁREAS INTERACTIVAS INVISIBLES (HOTSPOTS DE ÁREA) */
-        .area-target {
-            position: absolute;
-            background: rgba(255, 255, 255, 0);
-            border: 1.5px dashed rgba(255, 255, 255, 0.15);
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease-in-out;
-            z-index: 20;
+        /* PUNTOS NARANJAS (HOTSPOTS) */
+        .hotspot {
+            position: absolute; width: 30px; height: 30px; background-color: var(--accent);
+            border: 2px solid white; border-radius: 50%; cursor: pointer;
+            transform: translate(-50%, -50%); box-shadow: 0 0 15px rgba(255, 143, 0, 0.9);
+            animation: pulse 2s infinite; z-index: 20; display: flex; align-items: center;
+            justify-content: center; font-weight: bold; font-size: 0.8rem; color: #000;
         }
-        /* Resalte elegante solo al pasar el cursor */
-        .area-target:hover {
-            background: rgba(255, 143, 0, 0.25);
-            border: 2px solid var(--accent);
-            box-shadow: 0 0 15px rgba(255, 143, 0, 0.8);
-        }
-        .area-target::after {
-            content: attr(data-title);
-            position: absolute;
-            bottom: -25px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.85);
-            color: #fff;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            white-space: nowrap;
-            display: none;
-            border: 1px solid var(--accent);
-            pointer-events: none;
-        }
-        .area-target:hover::after {
-            display: block;
+        .hotspot span { display: none; position: absolute; bottom: 34px; background: #000; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; white-space: nowrap; border: 1px solid var(--accent); }
+        .hotspot:hover span { display: block; }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 143, 0, 0.7); }
+            70% { box-shadow: 0 0 0 12px rgba(255, 143, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 143, 0, 0); }
         }
 
-        /* BARRA SUPERIOR Y BOTÓN DOCENTE */
+        /* BARRA SUPERIOR E BOTÓN DOCENTE FLOTANTE */
         .top-info {
             position: fixed; top: 15px; left: 20px; z-index: 30;
             background: var(--panel-bg); padding: 10px 20px; border-radius: 30px;
@@ -175,12 +156,14 @@
         }
         .student-item {
             background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 8px; padding: 12px; margin-bottom: 10px; position: relative;
+            border-radius: 8px; padding: 12px; margin-bottom: 10px;
+            transition: 0.2s; position: relative;
         }
         .tag-room { background: var(--accent); color: #000; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.75rem; }
         .btn-kick {
             background: #c62828; color: #fff; border: none; padding: 4px 8px;
             border-radius: 4px; cursor: pointer; font-size: 0.75rem; font-weight: bold;
+            transition: 0.2s;
         }
         .btn-kick:hover { background: #b71c1c; }
         .details-box {
@@ -202,49 +185,39 @@
         </div>
     </div>
 
-    <!-- 2. BARRA DE ESTADO Y BOTÓN DOCENTE -->
+    <!-- 2. BARRA DE ESTADO Y BOTÓN DOCENTE FLOTANTE -->
     <div class="top-info" id="topInfo" style="display:none;">
         👤 Participante: <strong id="displayName">-</strong> | 🏫 Sala: <strong id="displayRoom">-</strong>
     </div>
 
     <button class="btn-teacher-toggle" id="btnTeacherToggle" onclick="toggleTeacherPanel()">👨‍🏫 Panel Docente</button>
 
-    <!-- 3. IMAGEN CON ÁREAS INVISIBLES INTERACTIVAS -->
+    <!-- 3. IMAGEN CON PUNTOS INTERACTIVOS -->
     <div class="scene-container" id="sceneContainer">
         <div class="eco-image-wrapper" id="imageWrapper" onclick="handleImageClick(event)">
             <img src="eco.jpg" alt="Ecosistema de Biodiversidad">
 
-            <!-- Áreas invisibles posicionadas sobre especies/elementos clave -->
-            <div class="area-target" style="top: 32%; left: 12%; width: 9%; height: 12%;" data-title="Tucán / Aves" onclick="openAreaModal(event, 'Tucán / Aves')"></div>
-            <div class="area-target" style="top: 62%; left: 62%; width: 12%; height: 14%;" data-title="Jaguar / Tigre" onclick="openAreaModal(event, 'Jaguar / Tigre')"></div>
-            <div class="area-target" style="top: 80%; left: 30%; width: 20%; height: 12%;" data-title="Río / Agua" onclick="openAreaModal(event, 'Río / Agua')"></div>
-            <div class="area-target" style="top: 15%; left: 70%; width: 18%; height: 25%;" data-title="Árboles / Frondosidad" onclick="openAreaModal(event, 'Árboles / Frondosidad')"></div>
-            <div class="area-target" style="top: 70%; left: 45%; width: 8%; height: 8%;" data-title="Víbora / Serpiente" onclick="openAreaModal(event, 'Víbora / Serpiente')"></div>
-            <div class="area-target" style="top: 48%; left: 25%; width: 7%; height: 9%;" data-title="Mariposa / Insectos" onclick="openAreaModal(event, 'Mariposa / Insectos')"></div>
-            <div class="area-target" style="top: 75%; left: 20%; width: 8%; height: 10%;" data-title="Tortuga" onclick="openAreaModal(event, 'Tortuga')"></div>
-            <div class="area-target" style="top: 68%; left: 32%; width: 9%; height: 10%;" data-title="Capibara" onclick="openAreaModal(event, 'Capibara')"></div>
-            <div class="area-target" style="top: 82%; left: 55%; width: 6%; height: 8%;" data-title="Escarabajos" onclick="openAreaModal(event, 'Escarabajos')"></div>
-            <div class="area-target" style="top: 20%; left: 82%; width: 10%; height: 12%;" data-title="Monos" onclick="openAreaModal(event, 'Monos')"></div>
-            <div class="area-target" style="top: 85%; left: 12%; width: 6%; height: 8%;" data-title="Hongos" onclick="openAreaModal(event, 'Hongos')"></div>
-            <div class="area-target" style="top: 55%; left: 78%; width: 10%; height: 12%;" data-title="Gacelas" onclick="openAreaModal(event, 'Gacelas')"></div>
-            <div class="area-target" style="top: 10%; left: 45%; width: 22%; height: 15%;" data-title="Cerro / Montaña" onclick="openAreaModal(event, 'Cerro / Montaña')"></div>
-            <div class="area-target" style="top: 65%; left: 10%; width: 7%; height: 9%;" data-title="Flores" onclick="openAreaModal(event, 'Flores')"></div>
-            <div class="area-target" style="top: 82%; left: 70%; width: 8%; height: 10%;" data-title="Peces" onclick="openAreaModal(event, 'Peces')"></div>
+            <div class="hotspot" style="top: 38%; left: 14%;" onclick="openLabelModal(event, 'Tucán')">📍<span>Tucán</span></div>
+            <div class="hotspot" style="top: 67%; left: 66%;" onclick="openLabelModal(event, 'Jaguar')">📍<span>Jaguar</span></div>
+            <div class="hotspot" style="top: 85%; left: 35%;" onclick="openLabelModal(event, 'Río')">📍<span>Río</span></div>
+            <div class="hotspot" style="top: 25%; left: 75%;" onclick="openLabelModal(event, 'Árbol')">📍<span>Árbol</span></div>
+            <div class="hotspot" style="top: 72%; left: 45%;" onclick="openLabelModal(event, 'Víbora')">📍<span>Víbora</span></div>
+            <div class="hotspot" style="top: 50%; left: 28%;" onclick="openLabelModal(event, 'Insectos')">📍<span>Insectos</span></div>
         </div>
     </div>
 
-    <!-- 4. MODAL PARA ASIGNAR NOMBRE A LA ESPECIE/ELEMENTO -->
-    <div class="modal" id="areaModal">
+    <!-- 4. MODAL ETIQUETA DE MARCA (HOTSPOT) -->
+    <div class="modal" id="labelModal">
         <div class="modal-content" style="max-width: 380px;">
-            <button class="close-btn" onclick="closeAreaModal()">&times;</button>
-            <h3 style="color: #81c784; margin-top:0;" id="areaTargetTitle">Identificar Especie</h3>
-            <p style="font-size: 0.85rem; color:#cfd8dc;">Escribe el nombre del ser vivo o elemento seleccionado:</p>
-            <input type="text" id="areaInput" placeholder="Ej. Tucán de Pico Verde">
-            <button class="btn-primary" onclick="saveAreaLabel()">Guardar Nombre en Tiempo Real</button>
+            <button class="close-btn" onclick="closeLabelModal()">&times;</button>
+            <h3 style="color: #81c784; margin-top:0;" id="labelTargetTitle">Identificar Elemento</h3>
+            <p style="font-size: 0.85rem; color:#cfd8dc;">Escribe el nombre o descripción de la especie/elemento señalado:</p>
+            <input type="text" id="labelInput" placeholder="Ej. Tucán de Pico Verde">
+            <button class="btn-primary" onclick="saveElementLabel()">Guardar Nombre en Tiempo Real</button>
         </div>
     </div>
 
-    <!-- 5. GUÍA COMPLETA DE PREGUNTAS (CLIC EN LA IMAGEN) -->
+    <!-- 5. GUÍA COMPLETA DE PREGUNTAS (CLIC EN IMAGEN) -->
     <div class="modal" id="activityModal">
         <div class="modal-content">
             <button class="close-btn" onclick="closeActivityModal()">&times;</button>
@@ -315,7 +288,7 @@
         </div>
     </div>
 
-    <!-- 6. PANEL DOCENTE -->
+    <!-- 6. PANEL DEL MAESTRO -->
     <div id="teacherPanel">
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #444; padding-bottom:10px;">
             <h3 style="color:#81c784; margin:0;">👨‍🏫 Panel del Docente</h3>
@@ -393,14 +366,17 @@
         function kickStudent(studentId, name) {
             if (confirm(`¿Estás seguro de que deseas expulsar a "${name}"? Se borrarán sus datos del sistema.`)) {
                 db.ref('respuestas/' + studentId).remove()
-                    .then(() => alert(`El participante ${name} ha sido expulsado.`))
+                    .then(() => {
+                        alert(`El participante ${name} ha sido expulsado.`);
+                    })
                     .catch(err => alert("Error al expulsar: " + err.message));
             }
         }
 
-        // Clic en la imagen para abrir la guía completa
         function handleImageClick(e) {
-            if (e.target.classList.contains('area-target')) return;
+            if (e.target.classList.contains('hotspot') || e.target.parentElement.classList.contains('hotspot')) {
+                return;
+            }
             if(!currentUser.name) {
                 alert('Ingresa tu nombre primero.');
                 return;
@@ -408,25 +384,24 @@
             document.getElementById('activityModal').style.display = 'flex';
         }
 
-        // Clic en una especie/área invisible
-        function openAreaModal(e, key) {
+        function openLabelModal(e, key) {
             e.stopPropagation();
             if(!currentUser.name) {
                 alert('Ingresa tu nombre primero.');
                 return;
             }
             activeTargetKey = key;
-            document.getElementById('areaTargetTitle').innerText = 'Identificar: ' + key;
-            document.getElementById('areaInput').value = studentLabels[key] || '';
-            document.getElementById('areaModal').style.display = 'flex';
+            document.getElementById('labelTargetTitle').innerText = 'Identificar: ' + key;
+            document.getElementById('labelInput').value = studentLabels[key] || '';
+            document.getElementById('labelModal').style.display = 'flex';
         }
 
-        function closeAreaModal() {
-            document.getElementById('areaModal').style.display = 'none';
+        function closeLabelModal() {
+            document.getElementById('labelModal').style.display = 'none';
         }
 
-        function saveAreaLabel() {
-            const val = document.getElementById('areaInput').value.trim();
+        function saveElementLabel() {
+            const val = document.getElementById('labelInput').value.trim();
             if(val) {
                 studentLabels[activeTargetKey] = val;
                 
@@ -437,7 +412,7 @@
                     elementLabels: studentLabels
                 });
             }
-            closeAreaModal();
+            closeLabelModal();
         }
 
         function closeActivityModal() {
@@ -588,7 +563,7 @@
                     </div>
                     
                     <div class="details-box">
-                        <p style="color:#ff8f00; font-weight:bold; margin-top:0;">📍 Nombres asignados en las áreas:</p>
+                        <p style="color:#ff8f00; font-weight:bold; margin-top:0;">📍 Nombres asignados en los puntos:</p>
                         ${labelsHtml}
                         
                         <p style="color:#81c784; font-weight:bold;">📖 Lectura / Escritura:</p>
