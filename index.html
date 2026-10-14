@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laboratorio Interactivo de Biodiversidad</title>
+
+    <!-- Firebase SDK (v9 compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+    <style>
+        :root {
+            --primary: #1b5e20;
+            --accent: #ff8f00;
+            --dark-bg: #0b100d;
+            --panel-bg: rgba(15, 25, 18, 0.95);
+        }
+
+        * { box-sizing: border-box; }
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; height: 100vh;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--dark-bg);
+            color: #fff;
+        }
+
+        /* REGISTRO / LOGIN */
+        #loginOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(11, 16, 13, 0.95); z-index: 1000;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .login-card {
+            background: var(--panel-bg);
+            border: 2px solid var(--accent);
+            padding: 30px; border-radius: 16px; width: 90%; max-width: 400px;
+            text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+        .login-card h2 { color: #81c784; margin-bottom: 20px; }
+        .login-card input {
+            width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.5);
+            color: #fff; font-size: 1rem;
+        }
+        .btn-primary {
+            width: 100%; padding: 12px; background: var(--accent); border: none;
+            color: #fff; font-weight: bold; border-radius: 8px; cursor: pointer;
+            margin-top: 12px; font-size: 1rem; transition: 0.2s;
+        }
+        .btn-primary:hover { background: #ffa000; }
+        .teacher-link {
+            display: block; margin-top: 15px; font-size: 0.85rem; color: #b0bec5;
+            cursor: pointer; text-decoration: underline;
+        }
+
+        /* ESCENA 3D */
+        .scene-container {
+            position: relative; width: 100vw; height: 100vh;
+            perspective: 1000px; display: flex; justify-content: center; align-items: center;
+        }
+        .eco-image-wrapper {
+            position: relative; width: 80vw; max-width: 1200px;
+            border-radius: 12px; box-shadow: 0 25px 50px rgba(0,0,0,0.8);
+            transition: transform 0.1s ease-out; transform-style: preserve-3d;
+            cursor: pointer;
+        }
+        .eco-image-wrapper img { width: 100%; height: auto; display: block; border-radius: 12px; }
+
+        /* ÁREAS INTERACTIVAS INVISIBLES (HOTSPOTS DE ÁREA) */
+        .area-target {
+            position: absolute;
+            background: rgba(255, 255, 255, 0);
+            border: 1.5px dashed rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            z-index: 20;
+        }
+        /* Resalte elegante solo al pasar el cursor */
+        .area-target:hover {
+            background: rgba(255, 143, 0, 0.25);
+            border: 2px solid var(--accent);
+            box-shadow: 0 0 15px rgba(255, 143, 0, 0.8);
+        }
+        .area-target::after {
+            content: attr(data-title);
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            display: none;
+            border: 1px solid var(--accent);
+            pointer-events: none;
+        }
+        .area-target:hover::after {
+            display: block;
+        }
+
+        /* BARRA SUPERIOR Y BOTÓN DOCENTE */
+        .top-info {
+            position: fixed; top: 15px; left: 20px; z-index: 30;
+            background: var(--panel-bg); padding: 10px 20px; border-radius: 30px;
+            border: 1px solid rgba(255,255,255,0.2); font-size: 0.9rem;
+        }
+        .btn-teacher-toggle {
+            position: fixed; top: 15px; right: 20px; z-index: 250;
+            background: #1b5e20; border: 2px solid #81c784; color: #fff;
+            padding: 10px 18px; border-radius: 30px; cursor: pointer;
+            font-weight: bold; font-size: 0.9rem; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            display: none; transition: 0.2s;
+        }
+        .btn-teacher-toggle:hover { background: #2e7d32; }
+
+        /* MODALES */
+        .modal {
+            display: none; position: fixed; z-index: 200; left: 0; top: 0;
+            width: 100%; height: 100%; background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(8px); justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: #18241b; border: 2px solid var(--accent); color: #fff;
+            padding: 25px; border-radius: 16px; max-width: 650px; width: 90%;
+            max-height: 85vh; overflow-y: auto; position: relative;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.9);
+        }
+        .close-btn {
+            position: absolute; top: 15px; right: 20px; font-size: 1.6rem;
+            color: #aaa; cursor: pointer; border: none; background: none;
+        }
+        .section-title {
+            color: #81c784; border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 5px; margin-top: 18px; font-size: 1.05rem; font-weight: bold;
+        }
+        label { display: block; margin: 8px 0 4px; font-size: 0.88rem; color: #cfd8dc; }
+        textarea, input[type="text"] {
+            width: 100%; padding: 10px; border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.4);
+            color: #fff; font-size: 0.9rem; margin-bottom: 10px;
+        }
+
+        /* TABLA MATEMÁTICA */
+        .eco-table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        .eco-table th, .eco-table td {
+            border: 1px solid rgba(255,255,255,0.2); padding: 6px; text-align: left;
+        }
+        .eco-table input, .eco-table select {
+            width: 100%; background: transparent; border: none; color: #fff; padding: 4px;
+        }
+        .eco-table option { background: #18241b; color: #fff; }
+
+        /* GRABADOR DE AUDIO */
+        .audio-recorder {
+            display: flex; align-items: center; gap: 10px; margin: 10px 0;
+            background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px;
+        }
+        .btn-rec {
+            background: #e53935; color: white; border: none; padding: 8px 15px;
+            border-radius: 20px; cursor: pointer; font-size: 0.85rem;
+        }
+
+        /* PANEL DOCENTE DESPLEGABLE */
+        #teacherPanel {
+            display: none; position: fixed; right: 0; top: 0; width: 450px; height: 100vh;
+            background: #0f1912; border-left: 2px solid var(--accent); z-index: 300;
+            padding: 20px; overflow-y: auto; box-shadow: -10px 0 30px rgba(0,0,0,0.8);
+        }
+        .student-item {
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px; padding: 12px; margin-bottom: 10px; position: relative;
+        }
+        .tag-room { background: var(--accent); color: #000; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.75rem; }
+        .btn-kick {
+            background: #c62828; color: #fff; border: none; padding: 4px 8px;
+            border-radius: 4px; cursor: pointer; font-size: 0.75rem; font-weight: bold;
+        }
+        .btn-kick:hover { background: #b71c1c; }
+        .details-box {
+            background: rgba(0,0,0,0.5); padding: 12px; border-radius: 8px; margin-top: 10px;
+            border-left: 3px solid #81c784; font-size: 0.85rem; display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. REGISTRO DE USUARIO -->
+    <div id="loginOverlay">
+        <div class="login-card">
+            <h2>🌿 Registro de Participante</h2>
+            <input type="text" id="studentName" placeholder="Tu Nombre Completo">
+            <input type="text" id="studentRoom" placeholder="Nombre de tu Sala / Grupo (ej. Grupo A)">
+            <button class="btn-primary" onclick="startSession()">Ingresar a la Experiencia</button>
+            <span class="teacher-link" onclick="openTeacherLogin()">¿Eres el Maestro? Click aquí</span>
+        </div>
+    </div>
+
+    <!-- 2. BARRA DE ESTADO Y BOTÓN DOCENTE -->
+    <div class="top-info" id="topInfo" style="display:none;">
+        👤 Participante: <strong id="displayName">-</strong> | 🏫 Sala: <strong id="displayRoom">-</strong>
+    </div>
+
+    <button class="btn-teacher-toggle" id="btnTeacherToggle" onclick="toggleTeacherPanel()">👨‍🏫 Panel Docente</button>
+
+    <!-- 3. IMAGEN CON ÁREAS INVISIBLES INTERACTIVAS -->
+    <div class="scene-container" id="sceneContainer">
+        <div class="eco-image-wrapper" id="imageWrapper" onclick="handleImageClick(event)">
+            <img src="eco.jpg" alt="Ecosistema de Biodiversidad">
+
+            <!-- Áreas invisibles posicionadas sobre especies/elementos clave -->
+            <div class="area-target" style="top: 32%; left: 12%; width: 9%; height: 12%;" data-title="Tucán / Aves" onclick="openAreaModal(event, 'Tucán / Aves')"></div>
+            <div class="area-target" style="top: 62%; left: 62%; width: 12%; height: 14%;" data-title="Jaguar / Tigre" onclick="openAreaModal(event, 'Jaguar / Tigre')"></div>
+            <div class="area-target" style="top: 80%; left: 30%; width: 20%; height: 12%;" data-title="Río / Agua" onclick="openAreaModal(event, 'Río / Agua')"></div>
+            <div class="area-target" style="top: 15%; left: 70%; width: 18%; height: 25%;" data-title="Árboles / Frondosidad" onclick="openAreaModal(event, 'Árboles / Frondosidad')"></div>
+            <div class="area-target" style="top: 70%; left: 45%; width: 8%; height: 8%;" data-title="Víbora / Serpiente" onclick="openAreaModal(event, 'Víbora / Serpiente')"></div>
+            <div class="area-target" style="top: 48%; left: 25%; width: 7%; height: 9%;" data-title="Mariposa / Insectos" onclick="openAreaModal(event, 'Mariposa / Insectos')"></div>
+            <div class="area-target" style="top: 75%; left: 20%; width: 8%; height: 10%;" data-title="Tortuga" onclick="openAreaModal(event, 'Tortuga')"></div>
+            <div class="area-target" style="top: 68%; left: 32%; width: 9%; height: 10%;" data-title="Capibara" onclick="openAreaModal(event, 'Capibara')"></div>
+            <div class="area-target" style="top: 82%; left: 55%; width: 6%; height: 8%;" data-title="Escarabajos" onclick="openAreaModal(event, 'Escarabajos')"></div>
+            <div class="area-target" style="top: 20%; left: 82%; width: 10%; height: 12%;" data-title="Monos" onclick="openAreaModal(event, 'Monos')"></div>
+            <div class="area-target" style="top: 85%; left: 12%; width: 6%; height: 8%;" data-title="Hongos" onclick="openAreaModal(event, 'Hongos')"></div>
+            <div class="area-target" style="top: 55%; left: 78%; width: 10%; height: 12%;" data-title="Gacelas" onclick="openAreaModal(event, 'Gacelas')"></div>
+            <div class="area-target" style="top: 10%; left: 45%; width: 22%; height: 15%;" data-title="Cerro / Montaña" onclick="openAreaModal(event, 'Cerro / Montaña')"></div>
+            <div class="area-target" style="top: 65%; left: 10%; width: 7%; height: 9%;" data-title="Flores" onclick="openAreaModal(event, 'Flores')"></div>
+            <div class="area-target" style="top: 82%; left: 70%; width: 8%; height: 10%;" data-title="Peces" onclick="openAreaModal(event, 'Peces')"></div>
+        </div>
+    </div>
+
+    <!-- 4. MODAL PARA ASIGNAR NOMBRE A LA ESPECIE/ELEMENTO -->
+    <div class="modal" id="areaModal">
+        <div class="modal-content" style="max-width: 380px;">
+            <button class="close-btn" onclick="closeAreaModal()">&times;</button>
+            <h3 style="color: #81c784; margin-top:0;" id="areaTargetTitle">Identificar Especie</h3>
+            <p style="font-size: 0.85rem; color:#cfd8dc;">Escribe el nombre del ser vivo o elemento seleccionado:</p>
+            <input type="text" id="areaInput" placeholder="Ej. Tucán de Pico Verde">
+            <button class="btn-primary" onclick="saveAreaLabel()">Guardar Nombre en Tiempo Real</button>
+        </div>
+    </div>
+
+    <!-- 5. GUÍA COMPLETA DE PREGUNTAS (CLIC EN LA IMAGEN) -->
+    <div class="modal" id="activityModal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeActivityModal()">&times;</button>
+            <h2 style="color: #81c784; margin-top:0;">📋 Guía de Trabajo e Indagación</h2>
+            <p style="font-size: 0.85rem; color: #b0bec5;">Responde a las preguntas de análisis del ecosistema:</p>
+
+            <form id="ecoForm" onsubmit="submitAnswers(event)">
+                <div class="section-title">📖 LECTURA</div>
+                <label>1. ¿Qué información te brinda la imagen sobre el ecosistema?</label>
+                <textarea id="lectura1" rows="2" required></textarea>
+                
+                <label>2. ¿Qué puedes inferir sobre la importancia del agua, luz o suelo?</label>
+                <textarea id="lectura2" rows="2" required></textarea>
+
+                <div class="section-title">✍️ ESCRITURA</div>
+                <label>1. Describe el ecosistema de la imagen en un párrafo de 6 a 8 líneas:</label>
+                <textarea id="escritura1" rows="6" required></textarea>
+
+                <label>2. Describe una propuesta de acciones para cuidar este ecosistema:</label>
+                <textarea id="escritura2" rows="3" required></textarea>
+
+                <div class="section-title">🧮 PENSAMIENTO LÓGICO MATEMÁTICO</div>
+                <label>1. ¿Cuántos seres vivos puedes contar? Clasifícalos en la tabla:</label>
+                <table class="eco-table" id="mathTable">
+                    <thead>
+                        <tr>
+                            <th>Ser Vivo</th>
+                            <th>Clasificación</th>
+                            <th>Cantidad</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><input type="text" placeholder="Ej. Jaguar" class="tv-name"></td>
+                            <td>
+                                <select class="tv-class">
+                                    <option value="Productor">Productor</option>
+                                    <option value="Consumidor">Consumidor</option>
+                                    <option value="Descomponedor">Descomponedor</option>
+                                </select>
+                            </td>
+                            <td><input type="number" placeholder="1" class="tv-count"></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <button type="button" onclick="addTableRow()" style="background:#333; color:#fff; border:1px solid #666; padding:4px 8px; border-radius:4px; cursor:pointer;">+ Agregar Fila</button>
+
+                <label style="margin-top:12px;">2. Si este ecosistema desapareciera en un 50% de plantas, ¿qué efectos podrían ocurrir? Justifica tu respuesta:</label>
+                <textarea id="math2" rows="3" required></textarea>
+
+                <div class="section-title">🔬 INDAGACIÓN CIENTÍFICA</div>
+                <label>1. ¿Qué pasa si disminuye la temperatura o la luz solar?</label>
+                <textarea id="indagacion1" rows="2" required></textarea>
+
+                <label>2. ¿Qué evidencia de la vida te permite afirmar que existe un ciclo de consumidores?</label>
+                <textarea id="indagacion2" rows="2" required></textarea>
+
+                <div class="section-title">🎙️ COMUNICACIÓN ORAL</div>
+                <label>Graba un audio expresando tu comentario sobre qué acciones debe tomar una persona para proteger estos ecosistemas:</label>
+                <div class="audio-recorder">
+                    <button type="button" class="btn-rec" id="recBtn" onclick="toggleRecording()">🔴 Grabar Audio</button>
+                    <span id="recStatus" style="font-size: 0.8rem;">Listo para grabar</span>
+                    <audio id="audioPreview" controls style="display:none; height:30px;"></audio>
+                </div>
+
+                <button type="submit" class="btn-primary" style="margin-top: 20px;">🚀 Enviar Preguntas Completa al Maestro</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 6. PANEL DOCENTE -->
+    <div id="teacherPanel">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #444; padding-bottom:10px;">
+            <h3 style="color:#81c784; margin:0;">👨‍🏫 Panel del Docente</h3>
+            <button onclick="closeTeacherPanel()" style="background:none; border:none; color:#fff; cursor:pointer; font-size:1.2rem;">✖</button>
+        </div>
+        <div style="margin: 15px 0;">
+            <label>Filtrar por Sala/Grupo:</label>
+            <input type="text" id="filterRoom" placeholder="Escribe la sala..." oninput="renderTeacherData()">
+        </div>
+        <div id="responsesContainer"></div>
+    </div>
+
+    <script>
+        // CONFIGURACIÓN DE FIREBASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyCFbiJQ21ly52KCIFms6i6KTPP1EwcQTDs",
+            authDomain: "dde-lapaz.firebaseapp.com",
+            databaseURL: "https://dde-lapaz-default-rtdb.firebaseio.com",
+            projectId: "dde-lapaz",
+            storageBucket: "dde-lapaz.firebasestorage.app",
+            messagingSenderId: "665712008298",
+            appId: "1:665712008298:web:6a8680b1b4117422047e13",
+            measurementId: "G-55GY7W40C8"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let currentUser = { name: '', room: '', studentId: '' };
+        let studentLabels = {};
+        let allResponses = {};
+        let activeTargetKey = '';
+        let mediaRecorder, audioChunks = [], audioBase64 = '';
+        let isTeacherAuthenticated = false;
+
+        function startSession() {
+            const name = document.getElementById('studentName').value.trim();
+            const room = document.getElementById('studentRoom').value.trim();
+            if (!name || !room) {
+                alert('Por favor ingresa tu nombre y tu sala para continuar.');
+                return;
+            }
+            const cleanId = (name + '_' + room).replace(/[^a-zA-Z0-9]/g, "_");
+            currentUser = { name, room, studentId: cleanId };
+            
+            document.getElementById('displayName').innerText = name;
+            document.getElementById('displayRoom').innerText = room;
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('topInfo').style.display = 'block';
+        }
+
+        function openTeacherLogin() {
+            const pass = prompt('Ingresa la contraseña de acceso docente:');
+            if (pass === 'mejia') {
+                isTeacherAuthenticated = true;
+                document.getElementById('loginOverlay').style.display = 'none';
+                document.getElementById('teacherPanel').style.display = 'block';
+                document.getElementById('btnTeacherToggle').style.display = 'block';
+                listenToResponses();
+            } else {
+                alert('Contraseña incorrecta');
+            }
+        }
+
+        function toggleTeacherPanel() {
+            if(!isTeacherAuthenticated) return;
+            const panel = document.getElementById('teacherPanel');
+            panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
+        }
+
+        function closeTeacherPanel() {
+            document.getElementById('teacherPanel').style.display = 'none';
+        }
+
+        function kickStudent(studentId, name) {
+            if (confirm(`¿Estás seguro de que deseas expulsar a "${name}"? Se borrarán sus datos del sistema.`)) {
+                db.ref('respuestas/' + studentId).remove()
+                    .then(() => alert(`El participante ${name} ha sido expulsado.`))
+                    .catch(err => alert("Error al expulsar: " + err.message));
+            }
+        }
+
+        // Clic en la imagen para abrir la guía completa
+        function handleImageClick(e) {
+            if (e.target.classList.contains('area-target')) return;
+            if(!currentUser.name) {
+                alert('Ingresa tu nombre primero.');
+                return;
+            }
+            document.getElementById('activityModal').style.display = 'flex';
+        }
+
+        // Clic en una especie/área invisible
+        function openAreaModal(e, key) {
+            e.stopPropagation();
+            if(!currentUser.name) {
+                alert('Ingresa tu nombre primero.');
+                return;
+            }
+            activeTargetKey = key;
+            document.getElementById('areaTargetTitle').innerText = 'Identificar: ' + key;
+            document.getElementById('areaInput').value = studentLabels[key] || '';
+            document.getElementById('areaModal').style.display = 'flex';
+        }
+
+        function closeAreaModal() {
+            document.getElementById('areaModal').style.display = 'none';
+        }
+
+        function saveAreaLabel() {
+            const val = document.getElementById('areaInput').value.trim();
+            if(val) {
+                studentLabels[activeTargetKey] = val;
+                
+                db.ref('respuestas/' + currentUser.studentId).update({
+                    student: currentUser.name,
+                    room: currentUser.room,
+                    timestamp: Date.now(),
+                    elementLabels: studentLabels
+                });
+            }
+            closeAreaModal();
+        }
+
+        function closeActivityModal() {
+            document.getElementById('activityModal').style.display = 'none';
+        }
+
+        function addTableRow() {
+            const tbody = document.querySelector('#mathTable tbody');
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><input type="text" placeholder="Ej. Planta" class="tv-name"></td>
+                <td>
+                    <select class="tv-class">
+                        <option value="Productor">Productor</option>
+                        <option value="Consumidor">Consumidor</option>
+                        <option value="Descomponedor">Descomponedor</option>
+                    </select>
+                </td>
+                <td><input type="number" placeholder="1" class="tv-count"></td>
+            `;
+            tbody.appendChild(row);
+        }
+
+        async function toggleRecording() {
+            const btn = document.getElementById('recBtn');
+            const status = document.getElementById('recStatus');
+
+            if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+
+                    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        const reader = new FileReader();
+                        reader.readAsDataURL(audioBlob);
+                        reader.onloadend = () => {
+                            audioBase64 = reader.result;
+                            const audioPreview = document.getElementById('audioPreview');
+                            audioPreview.src = audioBase64;
+                            audioPreview.style.display = 'block';
+                        };
+                    };
+
+                    mediaRecorder.start();
+                    btn.innerText = '⏹️ Detener';
+                    status.innerText = 'Grabando...';
+                } catch(e) {
+                    alert('Permiso de micrófono denegado o no disponible.');
+                }
+            } else {
+                mediaRecorder.stop();
+                btn.innerText = '🔴 Volver a Grabar';
+                status.innerText = 'Audio Listo';
+            }
+        }
+
+        function submitAnswers(e) {
+            e.preventDefault();
+
+            const tableRows = document.querySelectorAll('#mathTable tbody tr');
+            const tableData = [];
+            tableRows.forEach(row => {
+                const name = row.querySelector('.tv-name').value;
+                const type = row.querySelector('.tv-class').value;
+                const count = row.querySelector('.tv-count').value;
+                if(name) tableData.push({ name, type, count });
+            });
+
+            const payload = {
+                student: currentUser.name,
+                room: currentUser.room,
+                timestamp: Date.now(),
+                elementLabels: studentLabels,
+                lectura: {
+                    q1: document.getElementById('lectura1').value,
+                    q2: document.getElementById('lectura2').value
+                },
+                escritura: {
+                    q1: document.getElementById('escritura1').value,
+                    q2: document.getElementById('escritura2').value
+                },
+                matematica: {
+                    tabla: tableData,
+                    q2: document.getElementById('math2').value
+                },
+                indagacion: {
+                    q1: document.getElementById('indagacion1').value,
+                    q2: document.getElementById('indagacion2').value
+                },
+                audio: audioBase64
+            };
+
+            db.ref('respuestas/' + currentUser.studentId).set(payload, (err) => {
+                if(!err) {
+                    alert('¡Excelente! Tus respuestas han sido enviadas al maestro.');
+                    closeActivityModal();
+                } else {
+                    alert('Error al enviar respuestas.');
+                }
+            });
+        }
+
+        function listenToResponses() {
+            db.ref('respuestas').on('value', snapshot => {
+                allResponses = snapshot.val() || {};
+                renderTeacherData();
+            });
+        }
+
+        function renderTeacherData() {
+            const container = document.getElementById('responsesContainer');
+            const filter = document.getElementById('filterRoom').value.toLowerCase();
+            container.innerHTML = '';
+
+            Object.entries(allResponses).forEach(([id, resp]) => {
+                if (filter && !resp.room.toLowerCase().includes(filter)) return;
+
+                let labelsHtml = '<ul>';
+                if(resp.elementLabels) {
+                    Object.entries(resp.elementLabels).forEach(([elem, val]) => {
+                        labelsHtml += `<li><strong>${elem}:</strong> ${val}</li>`;
+                    });
+                } else {
+                    labelsHtml += '<li><em>Sin etiquetas asignadas aún</em></li>';
+                }
+                labelsHtml += '</ul>';
+
+                let tableHtml = '<ul>';
+                if(resp.matematica && resp.matematica.tabla) {
+                    resp.matematica.tabla.forEach(item => {
+                        tableHtml += `<li>${item.name} (${item.type}): ${item.count}</li>`;
+                    });
+                }
+                tableHtml += '</ul>';
+
+                const card = document.createElement('div');
+                card.className = 'student-item';
+                card.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <strong>👤 ${resp.student}</strong> 
+                            <span class="tag-room">${resp.room}</span>
+                        </div>
+                        <button class="btn-kick" onclick="kickStudent('${id}', '${resp.student}')">🗑️ Expulsar</button>
+                    </div>
+                    
+                    <div class="details-box">
+                        <p style="color:#ff8f00; font-weight:bold; margin-top:0;">📍 Nombres asignados en las áreas:</p>
+                        ${labelsHtml}
+                        
+                        <p style="color:#81c784; font-weight:bold;">📖 Lectura / Escritura:</p>
+                        <p><strong>Párrafo:</strong> ${resp.escritura ? resp.escritura.q1 : 'Pendiente'}</p>
+
+                        <p style="color:#81c784; font-weight:bold;">🧮 Seres Vivos Contados:</p>
+                        ${tableHtml}
+
+                        ${resp.audio ? `<p style="color:#81c784; font-weight:bold;">🎙️ Audio enviado:<br><audio src="${resp.audio}" controls style="width:100%; height:30px; margin-top:5px;"></audio></p>` : ''}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // EFECTO 3D
+        const container = document.getElementById('sceneContainer');
+        const wrapper = document.getElementById('imageWrapper');
+        container.addEventListener('mousemove', (e) => {
+            const xAxis = (window.innerWidth / 2 - e.clientX) / 40;
+            const yAxis = (window.innerHeight / 2 - e.clientY) / 40;
+            wrapper.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+        });
+        container.addEventListener('mouseleave', () => {
+            wrapper.style.transform = `rotateY(0deg) rotateX(0deg)`;
+        });
+    </script>
+</body>
+</html>
