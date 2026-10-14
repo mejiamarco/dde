@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laboratorio Interactivo de Biodiversidad</title>
+    <title>Laboratorio Interactivo de Biodiversidad - PROFE</title>
 
     <!-- Firebase SDK (v9 compat) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -13,6 +13,7 @@
         :root {
             --primary: #1b5e20;
             --accent: #ff8f00;
+            --gold: #ffd700;
             --dark-bg: #0b100d;
             --panel-bg: rgba(15, 25, 18, 0.95);
         }
@@ -25,6 +26,41 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--dark-bg);
             color: #fff;
+        }
+
+        /* TÍTULO PROFE DORADO ELEGANTE */
+        .profe-badge-title {
+            position: absolute;
+            top: -55px;
+            left: 0;
+            z-index: 25;
+            font-family: 'Georgia', 'Segoe UI', serif;
+            font-size: 2.2rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, #fff2a3 0%, #ffd700 40%, #cca000 80%, #ffae00 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0px 4px 15px rgba(255, 215, 0, 0.4);
+            filter: drop-shadow(0 2px 8px rgba(0,0,0,0.9));
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .profe-badge-title span {
+            font-size: 0.9rem;
+            font-family: 'Segoe UI', sans-serif;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: #e0e0e0;
+            -webkit-text-fill-color: #e0e0e0;
+            background: rgba(0,0,0,0.6);
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--gold);
         }
 
         /* PANTALLA DE REGISTRO / LOGIN */
@@ -86,7 +122,7 @@
             100% { box-shadow: 0 0 0 0 rgba(255, 143, 0, 0); }
         }
 
-        /* BARRA SUPERIOR E BOTÓN DOCENTE FLOTANTE */
+        /* BARRA SUPERIOR Y BOTÓN DOCENTE FLOTANTE */
         .top-info {
             position: fixed; top: 15px; left: 20px; z-index: 30;
             background: var(--panel-bg); padding: 10px 20px; border-radius: 30px;
@@ -192,9 +228,15 @@
 
     <button class="btn-teacher-toggle" id="btnTeacherToggle" onclick="toggleTeacherPanel()">👨‍🏫 Panel Docente</button>
 
-    <!-- 3. IMAGEN CON PUNTOS INTERACTIVOS -->
+    <!-- 3. IMAGEN CON TÍTULO PROFE Y PUNTOS INTERACTIVOS -->
     <div class="scene-container" id="sceneContainer">
         <div class="eco-image-wrapper" id="imageWrapper" onclick="handleImageClick(event)">
+            
+            <!-- TÍTULO PROFE DORADO SOBRE LA IMAGEN -->
+            <div class="profe-badge-title">
+                PROFE <span>Recursos Educativos</span>
+            </div>
+
             <img src="eco.jpg" alt="Ecosistema de Biodiversidad">
 
             <div class="hotspot" style="top: 38%; left: 14%;" onclick="openLabelModal(event, 'Tucán')">📍<span>Tucán</span></div>
@@ -590,6 +632,10 @@
         container.addEventListener('mouseleave', () => {
             wrapper.style.transform = `rotateY(0deg) rotateX(0deg)`;
         });
+    </script>
+</body>
+</html>
+
     </script>
 </body>
 </html>
