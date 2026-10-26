@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Laboratorio - PROFE</title>
+    <title>Laboratorio Interactivo de Biodiversidad - PROFE</title>
 
     <!-- Firebase SDK (v9 compat) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -325,8 +325,8 @@
                     <span class="profe-subtext">PROGRAMA</span>
                 </div>
 
-                <h2>ACTIVIDADES PARA FORTALECER LA ESCRITURA </h2>
-                <div class="subtitle">Autenticación para iniciar.</div>
+                <h2>EVALUACIÓN DIAGNÓSTICA</h2>
+                <div class="subtitle">Autenticación para iniciar el entorno de laboratorio.</div>
 
                 <div class="form-group-login">
                     <label>NOMBRE COMPLETO / REGISTRO</label>
@@ -338,7 +338,7 @@
                     <input type="text" id="studentRoom" class="input-neon-yellow" placeholder="Escriba la sala (ej. GRUPO_A)" style="text-transform: uppercase;">
                 </div>
 
-                <button class="btn-primary" onclick="startSession()">Ingresar</button>
+                <button class="btn-primary" onclick="startSession()">Ingresar a la Experiencia</button>
                 <span class="teacher-link" onclick="openTeacherLogin()">Acceso Docente</span>
             </div>
         </div>
@@ -357,20 +357,18 @@
 
                 <img src="eco.jpg" alt="Ecosistema de Biodiversidad">
 
-                <!-- PUNTOS DE OBSERVACIÓN Y DESCRIPCIÓN -->
+                <!-- PUNTOS DE OBSERVACIÓN Y DESCRIPCIÓN (CORREGIDOS EXACTOS PARA eco_3.jpg) -->
                 <div class="hotspot hs-green" style="top: 38%; left: 14%;" onclick="openLabelModal(event, 'Tucán')">📍<span>Tucán</span></div>
-                <div class="hotspot hs-yellow" style="top: 67%; left: 66%;" onclick="openLabelModal(event, 'Jaguar')">📍<span>Jaguar</span></div>
-                <div class="hotspot hs-red" style="top: 85%; left: 35%;" onclick="openLabelModal(event, 'Río')">📍<span>Río</span></div>
-                <div class="hotspot hs-green" style="top: 25%; left: 75%;" onclick="openLabelModal(event, 'Árbol')">📍<span>Árbol</span></div>
-                <div class="hotspot hs-yellow" style="top: 72%; left: 45%;" onclick="openLabelModal(event, 'Víbora')">📍<span>Víbora</span></div>
-                <div class="hotspot hs-red" style="top: 50%; left: 28%;" onclick="openLabelModal(event, 'Insectos')">📍<span>Insectos</span></div>
-                <div class="hotspot hs-green" style="top: 89%; left: 24%;" onclick="openLabelModal(event, 'Peces')">📍<span>Peces</span></div>
-                <div class="hotspot hs-yellow" style="top: 64%; left: 39%;" onclick="openLabelModal(event, 'Capibara')">📍<span>Capibara</span></div>
-                <div class="hotspot hs-red" style="top: 28%; left: 52%;" onclick="openLabelModal(event, 'Montaña')">📍<span>Montaña / Nieve</span></div>
-                <div class="hotspot hs-red" style="top: 86.5%; left: 91.5%;" onclick="openLabelModal(event, 'Hongos')">📍<span>Hongos</span></div>
-                
-                <!-- PUNTO CORREGIDO EXACTAMENTE SOBRE LA CABEZA DE VENADO DE LA PATA IZQUIERDA -->
-                <div class="hotspot hs-yellow" style="top: 70.5%; left: 30.5%; width: 34px; height: 34px;" onclick="openLabelModal(event, 'Venado')">📍<span>Venado</span></div>
+                <div class="hotspot hs-yellow" style="top: 68%; left: 68%;" onclick="openLabelModal(event, 'Jaguar')">📍<span>Jaguar</span></div>
+                <div class="hotspot hs-red" style="top: 62%; left: 45%;" onclick="openLabelModal(event, 'Río')">📍<span>Río</span></div>
+                <div class="hotspot hs-green" style="top: 22%; left: 33%;" onclick="openLabelModal(event, 'Árbol')">📍<span>Árbol</span></div>
+                <div class="hotspot hs-yellow" style="top: 73%; left: 24%;" onclick="openLabelModal(event, 'Víbora')">📍<span>Víbora</span></div>
+                <div class="hotspot hs-red" style="top: 25%; left: 54%;" onclick="openLabelModal(event, 'Insectos')">📍<span>Insectos</span></div>
+                <div class="hotspot hs-green" style="top: 83%; left: 34%;" onclick="openLabelModal(event, 'Peces')">📍<span>Peces</span></div>
+                <div class="hotspot hs-yellow" style="top: 65%; left: 57%;" onclick="openLabelModal(event, 'Capibara')">📍<span>Capibara</span></div>
+                <div class="hotspot hs-red" style="top: 23%; left: 62%;" onclick="openLabelModal(event, 'Montaña')">📍<span>Montaña / Nieve</span></div>
+                <div class="hotspot hs-red" style="top: 88%; left: 93%;" onclick="openLabelModal(event, 'Hongos')">📍<span>Hongos</span></div>
+                <div class="hotspot hs-yellow" style="top: 52%; left: 70%;" onclick="openLabelModal(event, 'Venado')">📍<span>Venado</span></div>
             </div>
         </div>
 
