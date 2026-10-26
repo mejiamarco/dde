@@ -1,4 +1,4 @@
-!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -95,7 +95,7 @@
         }
 
         .login-card h2 { 
-            color: #111; font-size: 1.15rem; font-weight: 800;
+            color: #111; font-size: 1.25rem; font-weight: 800;
             margin-bottom: 4px; letter-spacing: 0.5px; text-transform: uppercase;
         }
         .login-card .subtitle {
@@ -315,21 +315,21 @@
         <button class="btn-teacher-toggle" id="btnTeacherToggle" onclick="toggleTeacherPanel()">👨‍🏫 Panel Docente</button>
     </div>
 
-    <!-- PANTALLA DE ACCESO CORREGIDA -->
+    <!-- PANTALLA DE ACCESO FIEL A LA INTERFAZ CON LOGO PROFE EN DORADO -->
     <div id="loginOverlay">
         <div class="login-card-container">
             <div class="login-card">
-                <!-- LOGO PROFE DORADO -->
+                <!-- LOGO PROFE DORADO SUSTITUYENDO A PUENTE -->
                 <div class="profe-logo-badge">
                     <span class="profe-text">PROFE</span>
                     <span class="profe-subtext">PROGRAMA</span>
                 </div>
 
-                <h2>ACTIVIDADES PARA FORTALECER LA ESCRITURA</h2>
+                <h2>EVALUACIÓN DIAGNÓSTICA</h2>
                 <div class="subtitle">Autenticación para iniciar el entorno de laboratorio.</div>
 
                 <div class="form-group-login">
-                    <label>NOMBRE COMPLETO</label>
+                    <label>NOMBRE COMPLETO / REGISTRO</label>
                     <input type="text" id="studentName" class="input-neon-red" placeholder="Ingrese su nombre registrado">
                 </div>
 
@@ -338,7 +338,7 @@
                     <input type="text" id="studentRoom" class="input-neon-yellow" placeholder="Escriba la sala (ej. GRUPO_A)" style="text-transform: uppercase;">
                 </div>
 
-                <button class="btn-primary" id="btnIngresar" type="button" onclick="startSession()">Ingresar</button>
+                <button class="btn-primary" onclick="startSession()">Ingresar a la Experiencia</button>
                 <span class="teacher-link" onclick="openTeacherLogin()">Acceso Docente</span>
             </div>
         </div>
@@ -369,8 +369,8 @@
                 <div class="hotspot hs-red" style="top: 28%; left: 52%;" onclick="openLabelModal(event, 'Montaña')">📍<span>Montaña / Nieve</span></div>
                 <div class="hotspot hs-red" style="top: 86.5%; left: 91.5%;" onclick="openLabelModal(event, 'Hongos')">📍<span>Hongos</span></div>
                 
-                <!-- PUNTO SOBRE PATA EN FORMA DE CABEZA DE VENADO -->
-                <div class="hotspot hs-yellow" style="top: 71.5%; left: 29.5%; width: 36px; height: 36px;" onclick="openLabelModal(event, 'Venado')">📍<span>Venado</span></div>
+                <!-- PUNTO CORREGIDO EXACTAMENTE SOBRE LA CABEZA DE VENADO DE LA PATA IZQUIERDA -->
+                <div class="hotspot hs-yellow" style="top: 70.5%; left: 30.5%; width: 34px; height: 34px;" onclick="openLabelModal(event, 'Venado')">📍<span>Venado</span></div>
             </div>
         </div>
 
@@ -387,6 +387,7 @@
                 <input type="text" id="filterStudent" placeholder="Filtrar por nombre de participante..." oninput="renderTeacherData()">
             </div>
             <button class="btn-primary" style="padding: 10px; font-size: 0.85rem;" onclick="openReportPreviewModal()">📋 Ver Reporte de Redacciones</button>
+            <button class="btn-primary" style="padding: 10px; font-size: 0.85rem; background:#444; color:#fff;" onclick="generatePDFReport()">📥 Descargar PDF Directo</button>
             
             <div id="responsesContainer" style="display:flex; flex-direction:column; gap:10px;"></div>
         </div>
@@ -430,7 +431,7 @@
         </div>
     </div>
 
-    <!-- MODAL DE VISTA PREVIA DEL REPORTE -->
+    <!-- MODAL DE VISTA PREVIA DEL REPORTE (AÑADIDO SIN ALTERAR CÓDIGO BASE) -->
     <div class="modal" id="reportPreviewModal">
         <div class="modal-content" style="max-width: 780px;">
             <button class="close-btn" onclick="closeModal('reportPreviewModal')">&times;</button>
@@ -447,7 +448,7 @@
     </div>
 
     <script>
-        // CONFIGURACIÓN DE FIREBASE CON ASINCRONISMO SEGURO
+        // CONFIGURACIÓN DE FIREBASE REALTIME DATABASE (EXACTAMENTE IGUAL A v3_2)
         const firebaseConfig = {
             apiKey: "AIzaSyCFbiJQ21ly52KCIFms6i6KTPP1EwcQTDs",
             authDomain: "dde-lapaz.firebaseapp.com",
@@ -458,21 +459,8 @@
             appId: "1:665712008298:web:6a8680b1b4117422047e13"
         };
 
-        let db = null;
-
-        // Inicialización segura sin congelamiento
-        window.addEventListener('DOMContentLoaded', () => {
-            try {
-                if (typeof firebase !== 'undefined') {
-                    if (!firebase.apps.length) {
-                        firebase.initializeApp(firebaseConfig);
-                    }
-                    db = firebase.database();
-                }
-            } catch (e) {
-                console.warn("Firebase no inicializado, cambiando a modo local:", e);
-            }
-        });
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
         let currentUser = { name: '', room: '', studentId: '' };
         let studentLabels = {};
@@ -480,69 +468,43 @@
         let allResponses = {};
         let isTeacherAuthenticated = false;
 
-        // FUNCIÓN DE INGRESO GARANTIZADA
         function startSession() {
-            const nameEl = document.getElementById('studentName');
-            const roomEl = document.getElementById('studentRoom');
-            const overlay = document.getElementById('loginOverlay');
-
-            const name = nameEl ? nameEl.value.trim() : '';
-            const room = roomEl ? roomEl.value.trim().toUpperCase() : '';
-
+            const name = document.getElementById('studentName').value.trim();
+            const room = document.getElementById('studentRoom').value.trim().toUpperCase();
             if (!name || !room) {
-                alert('Por favor ingresa tu Nombre Completo y el Código de Sala.');
+                alert('Por favor ingresa tu nombre y el código de sala.');
                 return;
             }
-
             const cleanId = name.replace(/[^a-zA-Z0-9]/g, "_");
             currentUser = { name, room, studentId: cleanId };
 
-            // Cierre inmediato de la pantalla de bienvenida
-            if (overlay) {
-                overlay.style.display = 'none';
-            }
-            
-            const activeRoomLbl = document.getElementById('lblActiveRoom');
-            if (activeRoomLbl) {
-                activeRoomLbl.innerText = room;
-            }
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('lblActiveRoom').innerText = room;
 
-            // Intento no bloqueante de conexión
-            if (db) {
-                try {
-                    db.ref(`salas_biodiversidad/${room}/participantes/${cleanId}`).on('value', snapshot => {
-                        const val = snapshot.val();
-                        if (val && val.elementLabels) studentLabels = val.elementLabels;
-                    }, err => console.log("Aviso Firebase:", err));
-                } catch(err) {
-                    console.log("Continuando localmente:", err);
-                }
-            }
+            db.ref(`salas_biodiversidad/${room}/participantes/${cleanId}`).on('value', snapshot => {
+                const val = snapshot.val();
+                if (val && val.elementLabels) studentLabels = val.elementLabels;
+            });
         }
 
-        // ACCESO DOCENTE GARANTIZADO
         function openTeacherLogin() {
-            setTimeout(() => {
-                const pass = prompt('Ingresa la contraseña docente:');
-                if (pass === 'mejia') {
-                    const room = prompt('Ingresa el Código de la Sala a moderar (ej. GRUPO_A):', 'GRUPO_A');
-                    if (!room) return;
+            const pass = prompt('Ingresa la contraseña docente:');
+            if (pass === 'mejia') {
+                const room = prompt('Ingresa el Código de la Sala a moderar (ej. GRUPO_A):', 'GRUPO_A');
+                if(!room) return;
 
-                    isTeacherAuthenticated = true;
-                    currentUser.room = room.trim().toUpperCase();
-
-                    const overlay = document.getElementById('loginOverlay');
-                    if (overlay) overlay.style.display = 'none';
-
-                    document.getElementById('lblActiveRoom').innerText = currentUser.room;
-                    document.getElementById('btnTeacherToggle').style.display = 'block';
-                    document.getElementById('teacherSidebar').classList.add('active');
-                    
-                    listenToRoomData();
-                } else if (pass !== null) {
-                    alert('Contraseña incorrecta');
-                }
-            }, 50);
+                isTeacherAuthenticated = true;
+                currentUser.room = room.trim().toUpperCase();
+                document.getElementById('lblActiveRoom').innerText = currentUser.room;
+                
+                document.getElementById('loginOverlay').style.display = 'none';
+                document.getElementById('btnTeacherToggle').style.display = 'block';
+                document.getElementById('teacherSidebar').classList.add('active');
+                
+                listenToRoomData();
+            } else {
+                alert('Contraseña incorrecta');
+            }
         }
 
         function toggleTeacherPanel() {
@@ -579,21 +541,18 @@
             const val = document.getElementById('labelInput').value.trim();
             if (val) {
                 studentLabels[activeTargetKey] = val;
-                if (db) {
-                    db.ref(`salas_biodiversidad/${currentUser.room}/participantes/${currentUser.studentId}`).update({
-                        student: currentUser.name,
-                        timestamp: Date.now(),
-                        elementLabels: studentLabels
-                    });
-                }
+                db.ref(`salas_biodiversidad/${currentUser.room}/participantes/${currentUser.studentId}`).update({
+                    student: currentUser.name,
+                    timestamp: Date.now(),
+                    elementLabels: studentLabels
+                });
             }
             closeModal('labelModal');
         }
 
         function updateLineCount() {
             const text = document.getElementById('essayInput').value;
-            const lines = text.split('
-').filter(l => l.trim() !== '').length || (text ? 1 : 0);
+            const lines = text.split('\n').filter(l => l.trim() !== '').length || (text ? 1 : 0);
             const counter = document.getElementById('lineCounter');
             counter.innerText = `Líneas estimadas: ${lines} / 5-8`;
             counter.style.color = (lines >= 5 && lines <= 8) ? '#00ff88' : '#aaa';
@@ -606,37 +565,31 @@
                 return;
             }
 
-            if (db) {
-                db.ref(`salas_biodiversidad/${currentUser.room}/participantes/${currentUser.studentId}`).update({
-                    student: currentUser.name,
-                    redaccion: text,
-                    status: 'Entregado',
-                    timestamp: Date.now()
-                }, (err) => {
-                    alert('¡Redacción enviada correctamente!');
+            db.ref(`salas_biodiversidad/${currentUser.room}/participantes/${currentUser.studentId}`).update({
+                student: currentUser.name,
+                redaccion: text,
+                status: 'Entregado',
+                timestamp: Date.now()
+            }, (err) => {
+                if (!err) {
+                    alert('¡Redacción enviada correctamente al docente!');
                     closeModal('activityModal');
-                });
-            } else {
-                alert('¡Redacción guardada!');
-                closeModal('activityModal');
-            }
+                } else {
+                    alert('Error al enviar la redacción.');
+                }
+            });
         }
 
         function listenToRoomData() {
-            if (db) {
-                db.ref(`salas_biodiversidad/${currentUser.room}/participantes`).on('value', snapshot => {
-                    allResponses = snapshot.val() || {};
-                    renderTeacherData();
-                });
-            } else {
+            db.ref(`salas_biodiversidad/${currentUser.room}/participantes`).on('value', snapshot => {
+                allResponses = snapshot.val() || {};
                 renderTeacherData();
-            }
+            });
         }
 
         function renderTeacherData() {
             const container = document.getElementById('responsesContainer');
-            const filterInput = document.getElementById('filterStudent');
-            const filter = filterInput ? filterInput.value.toLowerCase() : '';
+            const filter = document.getElementById('filterStudent').value.toLowerCase();
             container.innerHTML = '';
 
             const borderColors = ['border-green', 'border-yellow', 'border-red'];
@@ -694,18 +647,14 @@
 
         function saveGrade(studentId) {
             const gradeVal = document.getElementById(`grade_${studentId}`).value;
-            if (db) {
-                db.ref(`salas_biodiversidad/${currentUser.room}/participantes/${studentId}`).update({
-                    nota: gradeVal
-                }, () => alert('Calificación guardada.'));
-            }
+            db.ref(`salas_biodiversidad/${currentUser.room}/participantes/${studentId}`).update({
+                nota: gradeVal
+            }, () => alert('Calificación guardada.'));
         }
 
         function kickStudent(studentId, name) {
             if (confirm(`¿Eliminar a "${name}" de esta sala?`)) {
-                if (db) {
-                    db.ref(`salas_biodiversidad/${currentUser.room}/participantes/${studentId}`).remove();
-                }
+                db.ref(`salas_biodiversidad/${currentUser.room}/participantes/${studentId}`).remove();
             }
         }
 
@@ -790,8 +739,7 @@
                 if (resp.elementLabels) {
                     labelsText = Object.entries(resp.elementLabels)
                         .map(([k, v]) => `${k}: ${v}`)
-                        .join('
-');
+                        .join('\n');
                 }
 
                 tableRows.push([
