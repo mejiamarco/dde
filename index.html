@@ -55,7 +55,7 @@
         }
         .btn-teacher-toggle:hover { background: var(--primary); color: #000; }
 
-        /* PANTALLA DE ACCESO Y SALAS */
+        /* PANTALLA DE ACCESO Y SALAS - PERSONALIZADA EN ROJO NEÓN Y DORADO */
         #loginOverlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(5, 8, 6, 0.97); z-index: 1000;
@@ -63,12 +63,16 @@
         }
         .login-card {
             background: var(--panel-bg);
-            border: 2px solid #ff007f;
-            box-shadow: 0 0 15px rgba(255, 0, 127, 0.6);
+            border: 2px solid var(--accent-red); /* MARCO ROJO NEÓN */
+            box-shadow: var(--neon-red-glow); /* RESPLANDOR ROJO NEÓN */
             padding: 30px; border-radius: 20px; width: 100%; max-width: 420px;
             text-align: center;
         }
-        .login-card h2 { color: #ffd700; margin-bottom: 20px; font-size: 1.4rem; text-shadow: 0 0 8px #ffd700; }
+        .login-card h2 { 
+            color: var(--accent-yellow); /* TÍTULO AMARILLO DORADO */
+            margin-bottom: 20px; font-size: 1.4rem; 
+            text-shadow: 0 0 8px var(--accent-yellow); 
+        }
         .login-card input {
             width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px;
             border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.6);
@@ -76,7 +80,7 @@
         }
         .login-card input:focus { border-color: var(--primary); box-shadow: var(--neon-green-glow); }
         .btn-primary {
-            width: 100%; padding: 12px; background: var(--primary); border: none;
+            width: 100%; padding: 12px; background: var(--primary); border: none; /* MANTENIDO EN VERDE NEÓN */
             color: #000; font-weight: bold; border-radius: 10px; cursor: pointer;
             margin-top: 12px; font-size: 1rem; transition: 0.2s;
             box-shadow: var(--neon-green-glow);
@@ -224,7 +228,6 @@
         }
         .orienting-questions strong { color: var(--accent-yellow); }
 
-        /* MEJORA CLAVE DE LECTURA DE TEXTO Y DESCRIPCIÓN CORREGIDA */
         textarea {
             width: 100%; padding: 12px; border-radius: 8px;
             border: 1px solid rgba(255,255,255,0.3); background: rgba(0,0,0,0.8);
@@ -290,6 +293,10 @@
                 <div class="hotspot hs-green" style="top: 89%; left: 24%;" onclick="openLabelModal(event, 'Peces')">📍<span>Peces</span></div>
                 <div class="hotspot hs-yellow" style="top: 64%; left: 39%;" onclick="openLabelModal(event, 'Capibara')">📍<span>Capibara</span></div>
                 <div class="hotspot hs-red" style="top: 28%; left: 52%;" onclick="openLabelModal(event, 'Montaña')">📍<span>Montaña / Nieve</span></div>
+                
+                <!-- NUEVOS PUNTOS AÑADIDOS -->
+                <div class="hotspot hs-red" style="top: 86.5%; left: 91.5%;" onclick="openLabelModal(event, 'Hongos')">📍<span>Hongos</span></div>
+                <div class="hotspot hs-yellow" style="top: 55.5%; left: 69.5%; width: 32px; height: 32px;" onclick="openLabelModal(event, 'Venado')">📍<span>Venado</span></div>
             </div>
         </div>
 
