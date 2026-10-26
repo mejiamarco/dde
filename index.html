@@ -8,6 +8,9 @@
     <!-- Firebase SDK (v9 compat) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <!-- jsPDF y AutoTable para generación nativa de PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
     <style>
         :root {
@@ -66,7 +69,7 @@
             text-align: center;
         }
         .login-card h2 { color: var(--primary); margin-bottom: 20px; font-size: 1.4rem; text-shadow: 0 0 8px var(--primary); }
-        .login-card input, .login-card select {
+        .login-card input {
             width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px;
             border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.6);
             color: #fff; font-size: 0.95rem; outline: none;
@@ -90,7 +93,7 @@
             margin-top: 48px; position: relative; overflow: hidden;
         }
 
-        /* ÁREA DE LA IMAGEN CENTRAL (SITUACIÓN FIJA SIN ROTACIÓN 3D) */
+        /* ÁREA DE LA IMAGEN CENTRAL */
         .scene-container {
             flex: 1; display: flex; justify-content: center; align-items: center;
             padding: 15px; position: relative; overflow: auto;
@@ -104,7 +107,7 @@
             width: 100%; height: auto; display: block; pointer-events: auto;
         }
 
-        /* TITULO PROFE INTEGRADO SOBRE LA IMAGEN */
+        /* TÍTULO PROFE INTEGRADO */
         .profe-badge-title {
             position: absolute; top: 12px; left: 12px; z-index: 25;
             font-family: 'Georgia', serif; font-size: 1.3rem; font-weight: 900;
@@ -121,7 +124,7 @@
             padding: 2px 6px; border-radius: 10px; border: 1px solid var(--accent-yellow);
         }
 
-        /* PUNTOS HOTSPOTS EXTENDIDOS (NEÓN MULTICOLOR) */
+        /* HOTSPOTS MULTICOLOR */
         .hotspot {
             position: absolute; width: 28px; height: 28px;
             border: 2px solid #fff; border-radius: 50%; cursor: pointer;
@@ -138,12 +141,11 @@
         }
         .hotspot:hover span { display: block; }
 
-        /* Estilos de puntos por color neón */
         .hs-green { background-color: var(--primary); box-shadow: var(--neon-green-glow); color: #000; }
         .hs-yellow { background-color: var(--accent-yellow); box-shadow: var(--neon-yellow-glow); color: #000; }
         .hs-red { background-color: var(--accent-red); box-shadow: var(--neon-red-glow); color: #fff; }
 
-        /* PANEL DEL DOCENTE LATERAL DERECHO */
+        /* PANEL DOCENTE */
         .teacher-sidebar {
             width: 380px; height: 100%; background: var(--panel-bg);
             border-left: 2px solid var(--accent-red); box-shadow: var(--neon-red-glow);
@@ -162,7 +164,6 @@
             color: #fff; font-size: 0.85rem; outline: none;
         }
 
-        /* RECUADROS DE ESTUDIANTES EN TIEMPO REAL */
         .student-card {
             background: rgba(0,0,0,0.6); border-radius: 12px; padding: 12px;
             border: 2px solid var(--primary); box-shadow: var(--neon-green-glow);
@@ -198,7 +199,7 @@
             border-radius: 4px; cursor: pointer; font-size: 0.7rem; font-weight: bold;
         }
 
-        /* MODALES DE TRABAJO Y ETIQUETADO */
+        /* MODALES */
         .modal {
             display: none; position: fixed; z-index: 500; left: 0; top: 0;
             width: 100%; height: 100%; background: rgba(0,0,0,0.85);
@@ -223,12 +224,14 @@
         }
         .orienting-questions strong { color: var(--accent-yellow); }
 
+        /* MEJORA CLAVE DE LECTURA DE TEXTO Y DESCRIPCIÓN CORREGIDA */
         textarea {
-            width: 100%; padding: 10px; border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.6);
-            color: #fff; font-size: 0.9rem; resize: vertical; outline: none;
+            width: 100%; padding: 12px; border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.3); background: rgba(0,0,0,0.8);
+            color: #fff; font-size: 0.95rem; line-height: 1.5; resize: vertical; outline: none;
+            box-sizing: border-box; font-family: inherit;
         }
-        textarea:focus { border-color: var(--accent-yellow); box-shadow: var(--neon-yellow-glow); }
+        textarea:focus { border-color: var(--primary); box-shadow: var(--neon-green-glow); }
 
         .line-counter {
             font-size: 0.75rem; color: #aaa; text-align: right; margin-top: 4px;
@@ -267,7 +270,7 @@
     <!-- CONTENEDOR PRINCIPAL -->
     <div class="main-container">
         
-        <!-- ESCENA INTERACTIVA (IMAGEN Y HOTSPOTS EXTENDIDOS) -->
+        <!-- ESCENA INTERACTIVA -->
         <div class="scene-container">
             <div class="eco-image-wrapper" id="imageWrapper" onclick="handleImageClick(event)">
                 
@@ -302,20 +305,23 @@
             <div class="filter-box">
                 <input type="text" id="filterStudent" placeholder="Filtrar por nombre de participante..." oninput="renderTeacherData()">
             </div>
-            <button class="btn-primary" style="padding: 8px; font-size: 0.85rem;" onclick="generateFullReport()">📄 Generar Reporte de Redacciones</button>
+            <button class="btn-primary" style="padding: 10px; font-size: 0.85rem;" onclick="generatePDFReport()">📥 Descargar Reporte Completo en PDF</button>
             
             <div id="responsesContainer" style="display:flex; flex-direction:column; gap:10px;"></div>
         </div>
     </div>
 
-    <!-- MODAL DE ETIQUETADO DE ELEMENTOS -->
+    <!-- MODAL DE ETIQUETADO Y DESCRIPCIÓN EXTENSA DEL ELEMENTO -->
     <div class="modal" id="labelModal">
-        <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-content" style="max-width: 480px;">
             <button class="close-btn" onclick="closeModal('labelModal')">&times;</button>
-            <h3 id="labelTargetTitle">Observar Elemento</h3>
-            <p style="font-size: 0.85rem; color:#ccc; margin-bottom:8px;">Identifica o describe brevemente el elemento seleccionado:</p>
-            <input type="text" id="labelInput" placeholder="Ej. Tucán de Pico Verde en el dosel">
-            <button class="btn-primary" onclick="saveElementLabel()">Guardar Identificación</button>
+            <h3 id="labelTargetTitle">Observar y Describir Elemento</h3>
+            <p style="font-size: 0.85rem; color:#ccc; margin-bottom:10px;">Escribe una descripción completa sobre este elemento. Puedes leer todo tu texto de forma clara antes de guardar:</p>
+            
+            <!-- TEXTAREA MULTILÍNEA CORREGIDO PARA LECTURA COMPLETA -->
+            <textarea id="labelInput" rows="4" placeholder="Describe aquí sus características, comportamiento o rol en el ecosistema..."></textarea>
+            
+            <button class="btn-primary" style="margin-top:12px;" onclick="saveElementLabel()">Guardar Identificación y Descripción</button>
         </div>
     </div>
 
@@ -338,7 +344,7 @@
                 Redacta un texto de <strong>5 a 8 líneas</strong> caracterizado por su orden lógico, claridad y terminología adecuada:
             </label>
             
-            <textarea id="essayInput" rows="7" placeholder="Escribe tu redacción aquí..." oninput="updateLineCount()"></textarea>
+            <textarea id="essayInput" rows="7" placeholder="Escribe tu redacción completa aquí..." oninput="updateLineCount()"></textarea>
             <div class="line-counter" id="lineCounter">Líneas estimadas: 0 / 5-8</div>
 
             <button class="btn-primary" style="margin-top:15px;" onclick="submitEssay()">🚀 Enviar Redacción al Docente</button>
@@ -427,7 +433,7 @@
                 return;
             }
             activeTargetKey = key;
-            document.getElementById('labelTargetTitle').innerText = 'Observar: ' + key;
+            document.getElementById('labelTargetTitle').innerText = 'Observar y Describir: ' + key;
             document.getElementById('labelInput').value = studentLabels[key] || '';
             document.getElementById('labelModal').style.display = 'flex';
         }
@@ -479,7 +485,6 @@
             });
         }
 
-        // ESCUCHA EN TIEMPO REAL RESTRINGIDA A LA SALA ACTIVA
         function listenToRoomData() {
             db.ref(`salas_biodiversidad/${currentUser.room}/participantes`).on('value', snapshot => {
                 allResponses = snapshot.val() || {};
@@ -558,56 +563,72 @@
             }
         }
 
-        function generateFullReport() {
-            let reportWin = window.open('', '_blank');
-            let content = `
-                <html>
-                <head>
-                    <title>Reporte de Redacción - Sala ${currentUser.room}</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; padding: 20px; color: #333; }
-                        h2 { color: #1b5e20; }
-                        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-                        th, td { border: 1px solid #ccc; padding: 10px; text-align: left; font-size: 0.85rem; }
-                        th { background: #e8f5e9; }
-                    </style>
-                </head>
-                <body>
-                    <h2>🌿 Reporte Evaluativo de Biodiversidad</h2>
-                    <p><strong>Sala / Grupo:</strong> ${currentUser.room}</p>
-                    <p><strong>Fecha:</strong> ${new Date().toLocaleDateString()}</p>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Participante</th>
-                                <th>Elementos Identificados</th>
-                                <th>Texto Descriptivo-Explicativo</th>
-                                <th>Nota</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
+        // GENERACIÓN DE REPORTES EN PDF CON jspdf Y autotable
+        function generatePDFReport() {
+            if (!window.jspdf) {
+                alert('Cargando librería PDF, por favor intenta en unos segundos...');
+                return;
+            }
 
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
+
+            // ENCABEZADO PROFE PDF
+            doc.setFillColor(15, 25, 18);
+            doc.rect(0, 0, 216, 28, 'F');
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(18);
+            doc.setTextColor(255, 215, 0);
+            doc.text('PROGRAMA PROFE', 14, 15);
+
+            doc.setFontSize(11);
+            doc.setTextColor(255, 255, 255);
+            doc.text('Laboratorio Interactivo de Biodiversidad - Reporte Evaluativo', 14, 22);
+
+            // INFORMACIÓN GENERAL DE LA SALA
+            doc.setTextColor(40, 40, 40);
+            doc.setFontSize(10);
+            doc.text(`Código de Sala / Grupo: ${currentUser.room}`, 14, 35);
+            doc.text(`Fecha de Generación: ${new Date().toLocaleDateString('es-BO')} - ${new Date().toLocaleTimeString('es-BO')}`, 14, 40);
+
+            // MATRIZ DE DATOS PARA AUTOTABLE
+            const tableRows = [];
             Object.values(allResponses).forEach(resp => {
-                let labels = resp.elementLabels ? Object.entries(resp.elementLabels).map(([k,v]) => `${k}: ${v}`).join('; ') : 'Ninguno';
-                content += `
-                    <tr>
-                        <td><strong>${resp.student}</strong></td>
-                        <td>${labels}</td>
-                        <td>${resp.redaccion || 'Sin entrega'}</td>
-                        <td><strong>${resp.nota || 'S/N'}</strong></td>
-                    </tr>
-                `;
+                let labelsText = 'Sin observaciones';
+                if (resp.elementLabels) {
+                    labelsText = Object.entries(resp.elementLabels)
+                        .map(([k, v]) => `${k}: ${v}`)
+                        .join('\n');
+                }
+
+                tableRows.push([
+                    resp.student || 'Anónimo',
+                    labelsText,
+                    resp.redaccion || 'Sin entrega',
+                    resp.nota ? `${resp.nota} / 100` : 'S/N'
+                ]);
             });
 
-            content += `
-                        </tbody>
-                    </table>
-                </body>
-                </html>
-            `;
-            reportWin.document.write(content);
-            reportWin.document.close();
+            // TABLA AUTO-AJUSTABLE DE ESTUDIANTES
+            doc.autoTable({
+                startY: 45,
+                head: [['Participante', 'Elementos y Descripciones', 'Redacción Descriptivo-Explicativa (5-8 líneas)', 'Nota']],
+                body: tableRows,
+                headStyles: { fillColor: [27, 94, 32], textColor: [255, 255, 255], fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: [245, 247, 245] },
+                columnStyles: {
+                    0: { cellWidth: 35, fontStyle: 'bold' },
+                    1: { cellWidth: 45 },
+                    2: { cellWidth: 85 },
+                    3: { cellWidth: 20, halign: 'center' }
+                },
+                styles: { fontSize: 8, overflow: 'linebreak' },
+                theme: 'grid'
+            });
+
+            // DESCARGA AUTOMÁTICA DEL PDF
+            doc.save(`Reporte_Biodiversidad_Sala_${currentUser.room}.pdf`);
         }
     </script>
 </body>
