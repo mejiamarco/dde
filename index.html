@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Laboratorio Interactivo de Biodiversidad - PROFE</title>
 
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <!-- Firebase SDK (v9 compat) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -14,347 +20,529 @@
             --primary: #1b5e20;
             --accent: #ff8f00;
             --gold: #ffd700;
-            --dark-bg: #0b100d;
-            --panel-bg: rgba(15, 25, 18, 0.95);
+            --dark-bg: #070a08;
+            --panel-bg: rgba(15, 25, 18, 0.85);
+            --cyan: #00e5ff;
         }
 
-        * { box-sizing: border-box; }
         body, html {
             margin: 0; padding: 0;
-            width: 100%; height: 100vh;
-            overflow: hidden;
+            width: 100%; height: 100%;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--dark-bg);
             color: #fff;
+            overflow-x: hidden;
         }
 
-        /* BARRA SUPERIOR E IDENTIFICACIÓN DE USUARIO (RESTRIGIDA A MÁX 40% DE ANCHO) */
-        .top-info {
-            position: fixed; top: 15px; left: 20px; z-index: 100;
-            background: var(--panel-bg); padding: 8px 16px; border-radius: 30px;
-            border: 1px solid rgba(255,255,255,0.2); font-size: 0.85rem;
-            max-width: 40vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent);
         }
 
-        /* BOTÓN DOCENTE FLOTANTE */
-        .btn-teacher-toggle {
-            position: fixed; top: 15px; right: 20px; z-index: 250;
-            background: #1b5e20; border: 2px solid #81c784; color: #fff;
-            padding: 10px 18px; border-radius: 30px; cursor: pointer;
-            font-weight: bold; font-size: 0.9rem; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            display: none; transition: 0.2s;
+        /* Glassmorphism Styles */
+        .glass-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
         }
-        .btn-teacher-toggle:hover { background: #2e7d32; }
 
-        /* TÍTULO PROFE DORADO INTEGRADO DENTRO DEL MARCO DE LA IMAGEN (ESQUINA SUPERIOR IZQUIERDA INTERNA) */
+        /* Glowing Effects */
+        .glow-gold {
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+        }
+        .glow-accent {
+            box-shadow: 0 0 15px rgba(255, 143, 0, 0.3);
+        }
+        .glow-cyan {
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.3);
+        }
+
+        /* PROFE Badge Title */
         .profe-badge-title {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            z-index: 25;
             font-family: 'Georgia', 'Segoe UI', serif;
-            font-size: 1.8rem;
+            font-size: 1.4rem;
             font-weight: 900;
-            letter-spacing: 2px;
+            letter-spacing: 1.5px;
             background: linear-gradient(135deg, #fff2a3 0%, #ffd700 40%, #cca000 80%, #ffae00 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            text-shadow: 0px 3px 12px rgba(255, 215, 0, 0.5);
             filter: drop-shadow(0 2px 6px rgba(0,0,0,0.95));
+        }
+
+        /* HOTSPOTS */
+        .hotspot {
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            background-color: var(--accent);
+            border: 2px solid white;
+            border-radius: 50%;
+            cursor: pointer;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 15px rgba(255, 143, 0, 0.9);
+            animation: pulse 2s infinite;
+            z-index: 20;
             display: flex;
             align-items: center;
-            gap: 8px;
-            pointer-events: none;
-            user-select: none;
-            background-color: rgba(11, 16, 13, 0.7);
-            padding: 6px 14px;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 215, 0, 0.5);
-            backdrop-filter: blur(4px);
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.8rem;
+            color: #000;
+            transition: all 0.3s ease;
         }
-
-        .profe-badge-title span {
-            font-size: 0.75rem;
-            font-family: 'Segoe UI', sans-serif;
-            font-weight: 600;
-            letter-spacing: 1px;
-            color: #e0e0e0;
-            -webkit-text-fill-color: #e0e0e0;
-            background: rgba(0,0,0,0.6);
-            padding: 3px 8px;
-            border-radius: 15px;
-            border: 1px solid var(--gold);
+        .hotspot:hover {
+            transform: translate(-50%, -50%) scale(1.2);
+            background-color: #00e5ff;
+            box-shadow: 0 0 20px rgba(0, 229, 255, 1);
         }
-
-        /* PANTALLA DE REGISTRO / LOGIN */
-        #loginOverlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(11, 16, 13, 0.95); z-index: 1000;
-            display: flex; justify-content: center; align-items: center;
-        }
-        .login-card {
-            background: var(--panel-bg);
-            border: 2px solid var(--accent);
-            padding: 30px; border-radius: 16px; width: 90%; max-width: 400px;
-            text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-        }
-        .login-card h2 { color: #81c784; margin-bottom: 20px; }
-        .login-card input {
-            width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.5);
-            color: #fff; font-size: 1rem;
-        }
-        .btn-primary {
-            width: 100%; padding: 12px; background: var(--accent); border: none;
-            color: #fff; font-weight: bold; border-radius: 8px; cursor: pointer;
-            margin-top: 12px; font-size: 1rem; transition: 0.2s;
-        }
-        .btn-primary:hover { background: #ffa000; }
-        .teacher-link {
-            display: block; margin-top: 15px; font-size: 0.85rem; color: #b0bec5;
-            cursor: pointer; text-decoration: underline;
-        }
-
-        /* ESCENA 3D CON MARGEN ADECUADO */
-        .scene-container {
-            position: relative; width: 100vw; height: 100vh;
-            perspective: 1000px; display: flex; justify-content: center; align-items: center;
-            padding-top: 40px;
-        }
-        .eco-image-wrapper {
-            position: relative; width: 80vw; max-width: 1200px;
-            border-radius: 12px; box-shadow: 0 25px 50px rgba(0,0,0,0.8);
-            transition: transform 0.1s ease-out; transform-style: preserve-3d;
-            cursor: pointer;
-        }
-        .eco-image-wrapper img { width: 100%; height: auto; display: block; border-radius: 12px; }
-
-        /* PUNTOS NARANJAS (HOTSPOTS) */
-        .hotspot {
-            position: absolute; width: 30px; height: 30px; background-color: var(--accent);
-            border: 2px solid white; border-radius: 50%; cursor: pointer;
-            transform: translate(-50%, -50%); box-shadow: 0 0 15px rgba(255, 143, 0, 0.9);
-            animation: pulse 2s infinite; z-index: 20; display: flex; align-items: center;
-            justify-content: center; font-weight: bold; font-size: 0.8rem; color: #000;
-        }
-        .hotspot span { display: none; position: absolute; bottom: 34px; background: #000; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; white-space: nowrap; border: 1px solid var(--accent); }
-        .hotspot:hover span { display: block; }
 
         @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(255, 143, 0, 0.7); }
-            70% { box-shadow: 0 0 0 12px rgba(255, 143, 0, 0); }
+            0% { box-shadow: 0 0 0 0 rgba(255, 143, 0, 0.8); }
+            70% { box-shadow: 0 0 0 14px rgba(255, 143, 0, 0); }
             100% { box-shadow: 0 0 0 0 rgba(255, 143, 0, 0); }
         }
 
-        /* MODALES */
-        .modal {
-            display: none; position: fixed; z-index: 200; left: 0; top: 0;
-            width: 100%; height: 100%; background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(8px); justify-content: center; align-items: center;
+        /* Student Card Badges */
+        .card-status-writing {
+            animation: pulse-orange 1.5s infinite;
         }
-        .modal-content {
-            background: #18241b; border: 2px solid var(--accent); color: #fff;
-            padding: 25px; border-radius: 16px; max-width: 650px; width: 90%;
-            max-height: 85vh; overflow-y: auto; position: relative;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.9);
-        }
-        .close-btn {
-            position: absolute; top: 15px; right: 20px; font-size: 1.6rem;
-            color: #aaa; cursor: pointer; border: none; background: none;
-        }
-        .section-title {
-            color: #81c784; border-bottom: 1px solid rgba(255,255,255,0.1);
-            padding-bottom: 5px; margin-top: 18px; font-size: 1.05rem; font-weight: bold;
-        }
-        label { display: block; margin: 8px 0 4px; font-size: 0.88rem; color: #cfd8dc; }
-        textarea, input[type="text"] {
-            width: 100%; padding: 10px; border-radius: 6px;
-            border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.4);
-            color: #fff; font-size: 0.9rem; margin-bottom: 10px;
+        @keyframes pulse-orange {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
 
-        /* TABLA MATEMÁTICA */
-        .eco-table { width: 100%; border-collapse: collapse; margin: 10px 0; }
-        .eco-table th, .eco-table td {
-            border: 1px solid rgba(255,255,255,0.2); padding: 6px; text-align: left;
-        }
-        .eco-table input, .eco-table select {
-            width: 100%; background: transparent; border: none; color: #fff; padding: 4px;
-        }
-        .eco-table option { background: #18241b; color: #fff; }
-
-        /* GRABADOR DE AUDIO */
-        .audio-recorder {
-            display: flex; align-items: center; gap: 10px; margin: 10px 0;
-            background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px;
-        }
-        .btn-rec {
-            background: #e53935; color: white; border: none; padding: 8px 15px;
-            border-radius: 20px; cursor: pointer; font-size: 0.85rem;
-        }
-
-        /* PANEL DOCENTE DESPLEGABLE */
-        #teacherPanel {
-            display: none; position: fixed; right: 0; top: 0; width: 450px; height: 100vh;
-            background: #0f1912; border-left: 2px solid var(--accent); z-index: 300;
-            padding: 20px; overflow-y: auto; box-shadow: -10px 0 30px rgba(0,0,0,0.8);
-        }
-        .student-item {
-            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 8px; padding: 12px; margin-bottom: 10px;
-            transition: 0.2s; position: relative;
-        }
-        .tag-room { background: var(--accent); color: #000; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.75rem; }
-        .btn-kick {
-            background: #c62828; color: #fff; border: none; padding: 4px 8px;
-            border-radius: 4px; cursor: pointer; font-size: 0.75rem; font-weight: bold;
-            transition: 0.2s;
-        }
-        .btn-kick:hover { background: #b71c1c; }
-        .details-box {
-            background: rgba(0,0,0,0.5); padding: 12px; border-radius: 8px; margin-top: 10px;
-            border-left: 3px solid #81c784; font-size: 0.85rem; display: block;
+        /* Print Styling for Report */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printableReport, #printableReport * {
+                visibility: visible;
+            }
+            #printableReport {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                color: #000 !important;
+                background: #fff !important;
+            }
+            .no-print {
+                display: none !important;
+            }
         }
     </style>
 </head>
-<body>
+<body class="bg-gray-950 text-white min-h-screen flex flex-col">
 
-    <!-- 1. REGISTRO DE USUARIO -->
-    <div id="loginOverlay">
-        <div class="login-card">
-            <h2>🌿 Registro de Participante</h2>
-            <input type="text" id="studentName" placeholder="Tu Nombre Completo">
-            <input type="text" id="studentRoom" placeholder="Nombre de tu Sala / Grupo (ej. Grupo A)">
-            <button class="btn-primary" onclick="startSession()">Ingresar a la Experiencia</button>
-            <span class="teacher-link" onclick="openTeacherLogin()">¿Eres el Maestro? Click aquí</span>
+    <!-- TOP HEADER / NAV BAR -->
+    <header class="glass-panel sticky top-0 z-40 px-4 py-3 flex flex-wrap justify-between items-center border-b border-emerald-900/40 gap-3">
+        <!-- Logo Badge -->
+        <div class="flex items-center gap-3">
+            <div class="bg-black/60 px-3 py-1.5 rounded-xl border border-amber-500/50 flex items-center gap-2">
+                <span class="profe-badge-title">PROFE</span>
+                <span class="text-xs font-semibold tracking-wider text-gray-200 bg-emerald-900/80 px-2 py-0.5 rounded-full border border-amber-400/40">
+                    Recursos Educativos
+                </span>
+            </div>
+            <h1 class="hidden md:block text-sm lg:text-base font-semibold text-emerald-300">
+                <i class="fa-solid font-bold fa-leaf text-amber-400 mr-1"></i> Laboratorio Interactivo de Biodiversidad
+            </h1>
         </div>
-    </div>
 
-    <!-- 2. BARRA DE ESTADO DE IDENTIFICACIÓN (FIJA EN LA ESQUINA SUPERIOR IZQUIERDA FUERA DE LA IMAGEN) -->
-    <div class="top-info" id="topInfo" style="display:none;">
-        👤 Participante: <strong id="displayName">-</strong> | 🏫 Sala: <strong id="displayRoom">-</strong>
-    </div>
-
-    <button class="btn-teacher-toggle" id="btnTeacherToggle" onclick="toggleTeacherPanel()">👨‍🏫 Panel Docente</button>
-
-    <!-- 3. IMAGEN CON TÍTULO PROFE UBICADO DENTRO DEL CONTENEDOR DE LA IMAGEN -->
-    <div class="scene-container" id="sceneContainer">
-        <div class="eco-image-wrapper" id="imageWrapper" onclick="handleImageClick(event)">
-            
-            <!-- TÍTULO PROFE DORADO INTEGRADO INTERNAMENTE SOBRE LA IMAGEN -->
-            <div class="profe-badge-title">
-                PROFE <span>Recursos Educativos</span>
+        <!-- User Info / Status Bar -->
+        <div class="flex items-center gap-3 text-xs md:text-sm">
+            <div id="userInfoBar" class="hidden bg-emerald-950/80 border border-emerald-500/40 px-3 py-1.5 rounded-full text-gray-200 flex items-center gap-2">
+                <span><i class="fa-solid fa-user text-emerald-400"></i> <strong id="displayName" class="text-white">-</strong></span>
+                <span class="text-gray-500">|</span>
+                <span><i class="fa-solid fa-users text-amber-400"></i> Sala: <strong id="displayRoom" class="text-amber-300">-</strong></span>
             </div>
 
-            <img src="eco.jpg" alt="Ecosistema de Biodiversidad">
-
-            <div class="hotspot" style="top: 38%; left: 14%;" onclick="openLabelModal(event, 'Tucán')">📍<span>Tucán</span></div>
-            <div class="hotspot" style="top: 67%; left: 66%;" onclick="openLabelModal(event, 'Jaguar')">📍<span>Jaguar</span></div>
-            <div class="hotspot" style="top: 85%; left: 35%;" onclick="openLabelModal(event, 'Río')">📍<span>Río</span></div>
-            <div class="hotspot" style="top: 25%; left: 75%;" onclick="openLabelModal(event, 'Árbol')">📍<span>Árbol</span></div>
-            <div class="hotspot" style="top: 72%; left: 45%;" onclick="openLabelModal(event, 'Víbora')">📍<span>Víbora</span></div>
-            <div class="hotspot" style="top: 50%; left: 28%;" onclick="openLabelModal(event, 'Insectos')">📍<span>Insectos</span></div>
+            <!-- Docente Controls Toggle -->
+            <button id="btnTeacherToggle" onclick="toggleTeacherMode()" class="bg-emerald-800 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-full border border-emerald-400 text-xs flex items-center gap-2 transition duration-200 shadow-md">
+                <i class="fa-solid fa-chalkboard-user"></i>
+                <span id="teacherBtnText">Modo Docente</span>
+            </button>
         </div>
-    </div>
+    </header>
 
-    <!-- 4. MODAL ETIQUETA DE MARCA (HOTSPOT) -->
-    <div class="modal" id="labelModal">
-        <div class="modal-content" style="max-width: 380px;">
-            <button class="close-btn" onclick="closeLabelModal()">&times;</button>
-            <h3 style="color: #81c784; margin-top:0;" id="labelTargetTitle">Identificar Elemento</h3>
-            <p style="font-size: 0.85rem; color:#cfd8dc;">Escribe el nombre o descripción de la especie/elemento señalado:</p>
-            <input type="text" id="labelInput" placeholder="Ej. Tucán de Pico Verde">
-            <button class="btn-primary" onclick="saveElementLabel()">Guardar Nombre en Tiempo Real</button>
-        </div>
-    </div>
+    <!-- INSTRUCTION BANNER -->
+    <section class="bg-gradient-to-r from-emerald-950 via-gray-900 to-emerald-950 px-4 py-3 border-b border-amber-500/30 text-center relative z-20">
+        <p class="text-amber-300 font-bold text-sm md:text-base lg:text-lg tracking-wide flex items-center justify-center gap-2">
+            <i class="fa-solid fa-eye text-amber-400 animate-bounce"></i>
+            <span>Observa detalladamente la imagen y luego redacta una descripción estructurada y coherente sobre un objeto, organismo o fenómeno natural.</span>
+        </p>
+        <p class="text-xs text-emerald-300/80 mt-1">
+            <i class="fa-solid fa-hand-pointer mr-1"></i> Haz clic o toca directamente sobre la imagen o en un punto naranja (hotspot) para comenzar tu redacción.
+        </p>
+    </section>
 
-    <!-- 5. GUÍA COMPLETA DE PREGUNTAS (CLIC EN IMAGEN) -->
-    <div class="modal" id="activityModal">
-        <div class="modal-content">
-            <button class="close-btn" onclick="closeActivityModal()">&times;</button>
-            <h2 style="color: #81c784; margin-top:0;">📋 Guía de Trabajo e Indagación</h2>
-            <p style="font-size: 0.85rem; color: #b0bec5;">Responde a las preguntas de análisis del ecosistema:</p>
-
-            <form id="ecoForm" onsubmit="submitAnswers(event)">
-                <div class="section-title">📖 LECTURA</div>
-                <label>1. ¿Qué información te brinda la imagen sobre el ecosistema?</label>
-                <textarea id="lectura1" rows="2" required></textarea>
+    <!-- MAIN INTERACTIVE CONTAINER (SPLIT VIEW) -->
+    <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 p-4 max-w-[1800px] w-full mx-auto">
+        
+        <!-- LEFT COLUMN: IMAGE AND INTERACTIVE ECOSYSTEM (7 COLS LG) -->
+        <div class="lg:col-span-7 flex flex-col gap-3">
+            <div class="glass-panel p-3 rounded-2xl relative flex flex-col items-center justify-center overflow-hidden border border-emerald-800/50 shadow-2xl">
                 
-                <label>2. ¿Qué puedes inferir sobre la importancia del agua, luz o suelo?</label>
-                <textarea id="lectura2" rows="2" required></textarea>
-
-                <div class="section-title">✍️ ESCRITURA</div>
-                <label>1. Describe el ecosistema de la imagen en un párrafo de 6 a 8 líneas:</label>
-                <textarea id="escritura1" rows="6" required></textarea>
-
-                <label>2. Describe una propuesta de acciones para cuidar este ecosistema:</label>
-                <textarea id="escritura2" rows="3" required></textarea>
-
-                <div class="section-title">🧮 PENSAMIENTO LÓGICO MATEMÁTICO</div>
-                <label>1. ¿Cuántos seres vivos puedes contar? Clasifícalos en la tabla:</label>
-                <table class="eco-table" id="mathTable">
-                    <thead>
-                        <tr>
-                            <th>Ser Vivo</th>
-                            <th>Clasificación</th>
-                            <th>Cantidad</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><input type="text" placeholder="Ej. Jaguar" class="tv-name"></td>
-                            <td>
-                                <select class="tv-class">
-                                    <option value="Productor">Productor</option>
-                                    <option value="Consumidor">Consumidor</option>
-                                    <option value="Descomponedor">Descomponedor</option>
-                                </select>
-                            </td>
-                            <td><input type="number" placeholder="1" class="tv-count"></td>
-                        </tr>
-                    </tbody>
-                </table>
-                <button type="button" onclick="addTableRow()" style="background:#333; color:#fff; border:1px solid #666; padding:4px 8px; border-radius:4px; cursor:pointer;">+ Agregar Fila</button>
-
-                <label style="margin-top:12px;">2. Si este ecosistema desapareciera en un 50% de plantas, ¿qué efectos podrían ocurrir? Justifica tu respuesta:</label>
-                <textarea id="math2" rows="3" required></textarea>
-
-                <div class="section-title">🔬 INDAGACIÓN CIENTÍFICA</div>
-                <label>1. ¿Qué pasa si disminuye la temperatura o la luz solar?</label>
-                <textarea id="indagacion1" rows="2" required></textarea>
-
-                <label>2. ¿Qué evidencia de la vida te permite afirmar que existe un ciclo de consumidores?</label>
-                <textarea id="indagacion2" rows="2" required></textarea>
-
-                <div class="section-title">🎙️ COMUNICACIÓN ORAL</div>
-                <label>Graba un audio expresando tu comentario sobre qué acciones debe tomar una persona para proteger estos ecosistemas:</label>
-                <div class="audio-recorder">
-                    <button type="button" class="btn-rec" id="recBtn" onclick="toggleRecording()">🔴 Grabar Audio</button>
-                    <span id="recStatus" style="font-size: 0.8rem;">Listo para grabar</span>
-                    <audio id="audioPreview" controls style="display:none; height:30px;"></audio>
+                <!-- Target Element Label Ribbon -->
+                <div id="targetRibbon" class="w-full bg-black/60 border border-amber-500/40 rounded-lg px-3 py-1.5 mb-2 flex justify-between items-center text-xs">
+                    <span class="text-gray-300"><i class="fa-solid fa-crosshairs text-amber-400 mr-1"></i> Elemento seleccionado: <strong id="selectedElementName" class="text-amber-300 text-sm">Cualquier elemento de la escena</strong></span>
+                    <span class="text-emerald-400 text-[11px]"><i class="fa-solid fa-touch-app"></i> Haz clic en los puntos interactivos</span>
                 </div>
 
-                <button type="submit" class="btn-primary" style="margin-top: 20px;">🚀 Enviar Preguntas Completa al Maestro</button>
-            </form>
+                <!-- Scene Wrapper -->
+                <div class="relative w-full rounded-xl overflow-hidden shadow-2xl border border-gray-700/60 group cursor-pointer" id="imageWrapper" onclick="handleImageClick(event)">
+                    
+                    <!-- SVG Interactive Ecosystem Canvas Representation -->
+                    <svg class="w-full h-auto object-cover max-h-[65vh] rounded-xl select-none" viewBox="0 0 1000 650" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="skyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#1a3c40" />
+                                <stop offset="40%" stop-color="#2d5a27" />
+                                <stop offset="100%" stop-color="#112211" />
+                            </linearGradient>
+                            <linearGradient id="riverGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#00838f" />
+                                <stop offset="50%" stop-color="#00e5ff" />
+                                <stop offset="100%" stop-color="#006064" />
+                            </linearGradient>
+                            <filter id="glow">
+                                <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                                <feMerge>
+                                    <feMergeNode in="coloredBlur"/>
+                                    <feMergeNode in="SourceGraphic"/>
+                                </feMerge>
+                            </filter>
+                        </defs>
+
+                        <!-- Background & Sky -->
+                        <rect width="1000" height="650" fill="url(#skyGrad)"/>
+
+                        <!-- Mountains / Jungle Background -->
+                        <path d="M0,350 Q250,180 500,320 T1000,280 L1000,650 L0,650 Z" fill="#0d2818" opacity="0.8"/>
+                        <path d="M0,400 Q300,280 600,380 T1000,350 L1000,650 L0,650 Z" fill="#14361f"/>
+
+                        <!-- River -->
+                        <path d="M200,650 Q400,500 550,450 T1000,420 L1000,650 Z" fill="url(#riverGrad)" opacity="0.85"/>
+                        
+                        <!-- Sun Rays Effects -->
+                        <circle cx="850" cy="120" r="80" fill="#ffd700" opacity="0.25" filter="url(#glow)"/>
+                        <circle cx="850" cy="120" r="40" fill="#fff2a3" opacity="0.6"/>
+
+                        <!-- Big Ancient Tree -->
+                        <path d="M750,550 C730,450 710,350 780,220 C820,120 720,80 650,150 C580,80 480,140 520,240 C550,300 600,380 660,550 Z" fill="#1b4332"/>
+                        <rect x="690" y="380" width="45" height="220" fill="#3d2314" rx="10"/>
+
+                        <!-- Animals Sketch Outlines -->
+                        <!-- Toucan in Tree -->
+                        <g transform="translate(620, 180) scale(0.8)">
+                            <path d="M10,20 Q30,-10 50,10 Q60,0 90,5 Q70,25 50,25 Q30,40 10,20 Z" fill="#ff8f00"/>
+                            <circle cx="35" cy="12" r="12" fill="#fff"/>
+                            <circle cx="37" cy="10" r="4" fill="#000"/>
+                        </g>
+
+                        <!-- Jaguar on Rock -->
+                        <g transform="translate(620, 420) scale(0.9)">
+                            <ellipse cx="40" cy="30" rx="35" ry="20" fill="#e65100"/>
+                            <circle cx="65" cy="18" r="14" fill="#e65100"/>
+                            <circle cx="10" cy="35" r="4" fill="#222"/>
+                            <circle cx="25" cy="25" r="5" fill="#222"/>
+                            <circle cx="45" cy="32" r="4" fill="#222"/>
+                        </g>
+
+                        <!-- Snake on Branch -->
+                        <path d="M420,440 Q450,420 480,450 T540,440" stroke="#76ff03" stroke-width="8" fill="none" stroke-linecap="round"/>
+
+                        <!-- Fish / Water Life -->
+                        <path d="M350,580 Q370,570 380,580 Q370,590 350,580 Z" fill="#00e5ff"/>
+                        <path d="M450,610 Q470,600 480,610 Q470,620 450,610 Z" fill="#00e5ff"/>
+
+                        <!-- Birds in Sky -->
+                        <path d="M150,120 Q160,110 170,120 Q180,110 190,120" stroke="#fff" stroke-width="3" fill="none"/>
+                        <path d="M220,150 Q230,140 240,150 Q250,140 260,150" stroke="#fff" stroke-width="3" fill="none"/>
+
+                        <!-- Text Overlay on Scene -->
+                        <text x="30" y="50" fill="#ffffff" font-size="22" font-weight="bold" opacity="0.9" filter="url(#glow)">
+                            Ecosistema Neotropical - Observación
+                        </text>
+                    </svg>
+
+                    <!-- Interactive Hotspots Overlay (Absolute Placed) -->
+                    <div class="hotspot" style="top: 25%; left: 63%;" onclick="selectHotspot(event, 'Tucán')">
+                        <i class="fa-solid fa-kiwi-bird text-xs"></i>
+                    </div>
+                    <div class="hotspot" style="top: 66%; left: 67%;" onclick="selectHotspot(event, 'Jaguar')">
+                        <i class="fa-solid fa-cat text-xs"></i>
+                    </div>
+                    <div class="hotspot" style="top: 86%; left: 42%;" onclick="selectHotspot(event, 'Río y Vida Acuática')">
+                        <i class="fa-solid fa-water text-xs"></i>
+                    </div>
+                    <div class="hotspot" style="top: 35%; left: 72%;" onclick="selectHotspot(event, 'Árbol Gigante (Flora)')">
+                        <i class="fa-solid fa-tree text-xs"></i>
+                    </div>
+                    <div class="hotspot" style="top: 68%; left: 48%;" onclick="selectHotspot(event, 'Víbora (Reptil)')">
+                        <i class="fa-solid fa-staff-snake text-xs"></i>
+                    </div>
+                    <div class="hotspot" style="top: 20%; left: 85%;" onclick="selectHotspot(event, 'Sol y Energía (Factor Abiótico)')">
+                        <i class="fa-solid fa-sun text-xs"></i>
+                    </div>
+
+                </div>
+
+                <div class="w-full text-center mt-2 text-xs text-gray-400">
+                    💡 <span class="text-amber-400">Puntos Clave:</span> Tucán, Jaguar, Río, Árbol, Víbora, Sol/Energía.
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: MULTI-USER REAL-TIME WALL (5 COLS LG) -->
+        <div class="lg:col-span-5 flex flex-col h-full min-h-[500px]">
+            <div class="glass-panel p-4 rounded-2xl flex-1 flex flex-col border border-emerald-800/50 shadow-2xl relative">
+                
+                <!-- Header Wall -->
+                <div class="flex items-center justify-between pb-3 border-b border-gray-700/60 mb-3">
+                    <h2 class="text-base font-bold text-emerald-300 flex items-center gap-2">
+                        <i class="fa-solid fa-users-viewfinder text-cyan-400"></i>
+                        <span>Muro de Redacción en Tiempo Real</span>
+                    </h2>
+                    <span id="activeCountBadge" class="bg-cyan-950 text-cyan-300 border border-cyan-500/40 text-xs px-2.5 py-0.5 rounded-full font-semibold">
+                        0 Participantes
+                    </span>
+                </div>
+
+                <!-- Teacher Quick Controls Banner (Visible in Teacher Mode) -->
+                <div id="teacherHeaderTools" class="hidden mb-3 bg-amber-950/80 border border-amber-500/50 p-2.5 rounded-xl text-xs flex justify-between items-center">
+                    <span class="text-amber-200 font-medium"><i class="fa-solid fa-shield-halved text-amber-400 mr-1"></i> Modo Docente Activo</span>
+                    <button onclick="generateReport()" class="bg-amber-500 hover:bg-amber-400 text-black font-bold px-3 py-1 rounded-lg text-xs transition flex items-center gap-1 shadow">
+                        <i class="fa-solid fa-file-pdf"></i> Generar Reporte
+                    </button>
+                </div>
+
+                <!-- Filter by Room Input -->
+                <div class="mb-3">
+                    <div class="relative">
+                        <i class="fa-solid fa-filter absolute left-3 top-2.5 text-gray-400 text-xs"></i>
+                        <input type="text" id="filterRoomInput" oninput="renderStudentWall()" placeholder="Filtrar por Sala o Grupo..." 
+                               class="w-full bg-black/50 border border-gray-700 rounded-lg pl-8 pr-3 py-1.5 text-xs text-gray-200 focus:outline-none focus:border-emerald-500">
+                    </div>
+                </div>
+
+                <!-- Student Cards Scrollable Container -->
+                <div id="studentsWallContainer" class="flex-1 overflow-y-auto space-y-3 pr-1 max-h-[60vh] lg:max-h-[calc(100vh-280px)]">
+                    <!-- Dynamic Student Cards will be rendered here -->
+                    <div class="text-center py-12 text-gray-500 text-xs">
+                        <i class="fa-solid fa-spinner fa-spin text-lg mb-2"></i>
+                        <p>Cargando participantes en tiempo real...</p>
+                    </div>
+                </div>
+
+                <!-- Bottom Floating CTA for Current User -->
+                <div class="mt-3 pt-2 border-t border-gray-800">
+                    <button onclick="openWritingModal()" class="w-full bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white font-bold py-2.5 px-4 rounded-xl shadow-lg border border-emerald-400/30 text-sm flex items-center justify-center gap-2 transition transform active:scale-95">
+                        <i class="fa-solid fa-pen-to-square text-amber-300"></i>
+                        <span id="btnWritingText">Redactar / Editar mi Descripción</span>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODAL: REGISTRATION / LOGIN -->
+    <div id="loginOverlay" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="glass-panel border-2 border-amber-500/60 p-6 md:p-8 rounded-2xl max-w-md w-full shadow-2xl relative text-center">
+            
+            <div class="mb-4 inline-block bg-black/60 px-4 py-2 rounded-xl border border-amber-500/40">
+                <span class="profe-badge-title">PROFE</span>
+                <p class="text-xs text-amber-300 font-semibold tracking-wider uppercase mt-1">Recursos Educativos</p>
+            </div>
+
+            <h2 class="text-xl font-bold text-emerald-300 mb-1">🌿 Registro de Participante</h2>
+            <p class="text-xs text-gray-400 mb-6">Ingresa tus datos para comenzar la experiencia interactiva</p>
+
+            <div class="space-y-4 text-left">
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1"><i class="fa-solid fa-user text-emerald-400 mr-1"></i> Nombre Completo:</label>
+                    <input type="text" id="inputStudentName" placeholder="Ej. María Gonzales" 
+                           class="w-full bg-black/60 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-gray-300 mb-1"><i class="fa-solid fa-users text-amber-400 mr-1"></i> Sala o Grupo de Trabajo:</label>
+                    <input type="text" id="inputStudentRoom" placeholder="Ej. Grupo A / 5to Secundaria" 
+                           class="w-full bg-black/60 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400">
+                </div>
+
+                <button onclick="startSession()" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold py-3 rounded-xl shadow-lg text-sm tracking-wide transition mt-2">
+                    <i class="fa-solid fa-rocket mr-1"></i> Ingresar al Laboratorio
+                </button>
+
+                <div class="text-center pt-2">
+                    <button onclick="promptTeacherLogin()" class="text-xs text-gray-400 hover:text-amber-300 underline transition">
+                        <i class="fa-solid fa-key mr-1"></i> ¿Eres el Maestro / Docente? Haz clic aquí
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- 6. PANEL DEL MAESTRO -->
-    <div id="teacherPanel">
-        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #444; padding-bottom:10px;">
-            <h3 style="color:#81c784; margin:0;">👨‍🏫 Panel del Docente</h3>
-            <button onclick="closeTeacherPanel()" style="background:none; border:none; color:#fff; cursor:pointer; font-size:1.2rem;">✖</button>
+    <!-- MODAL: WRITING ACTIVITY WITH GUIDING QUESTIONS -->
+    <div id="writingModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden justify-center items-center p-3 md:p-6 overflow-y-auto">
+        <div class="glass-panel border-2 border-emerald-500/60 p-5 md:p-6 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl relative">
+            
+            <button onclick="closeWritingModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <h3 class="text-lg font-bold text-emerald-300 mb-1 flex items-center gap-2">
+                <i class="fa-solid fa-pen-nib text-amber-400"></i> Redacción Descriptiva - Explicativa
+            </h3>
+            <p class="text-xs text-gray-300 mb-4">
+                Redacta un texto descriptivo-explicativo con una extensión sugerida de <strong>5 a 8 líneas</strong> con orden lógico, claridad y terminología adecuada.
+            </p>
+
+            <!-- Selected Element Tag -->
+            <div class="bg-emerald-950/80 border border-emerald-600/50 rounded-xl p-2.5 mb-4 flex justify-between items-center text-xs">
+                <span>Elemento enfocado: <strong id="modalSelectedElement" class="text-amber-300">Visión General del Ecosistema</strong></span>
+                <span class="text-gray-400 text-[11px]">Puedes cambiarlo haciendo clic en la imagen</span>
+            </div>
+
+            <!-- GUIDING QUESTIONS PANEL (ALWAYS VISIBLE DURING WRITING) -->
+            <div class="bg-amber-950/40 border border-amber-500/40 rounded-xl p-3.5 mb-4 text-xs space-y-2">
+                <p class="font-bold text-amber-300 flex items-center gap-1.5 text-xs uppercase tracking-wider">
+                    <i class="fa-solid fa-lightbulb text-amber-400"></i> Preguntas Guía para orientar tu análisis:
+                </p>
+                <ul class="list-disc pl-5 space-y-1 text-gray-200">
+                    <li><strong>¿Qué representa la imagen?</strong> (Identifica la escena global u organismo).</li>
+                    <li><strong>¿Qué elementos bióticos (vivos) y abióticos (no vivos) se logran identificar?</strong></li>
+                    <li><strong>¿De qué manera interactúan o se relacionan los elementos que conforman este sistema?</strong></li>
+                    <li><strong>¿Qué ocurriría si uno de estos componentes fuera alterado o desapareciera?</strong></li>
+                </ul>
+            </div>
+
+            <!-- WRITING TEXTAREA WITH LIVE LINE / WORD COUNT -->
+            <div class="mb-4">
+                <label class="block text-xs font-semibold text-emerald-300 mb-1">
+                    Tu Redacción (5 a 8 líneas):
+                </label>
+                <textarea id="writingTextarea" rows="7" oninput="handleTextTyping()" 
+                          placeholder="Comienza a redactar tu análisis aquí... Ejemplo: En la imagen se representa un ecosistema neotropical frondoso donde interactúan diversos seres vivos como el jaguar, el tucán y la flora autóctona..."
+                          class="w-full bg-black/60 border border-gray-700 rounded-xl p-3 text-sm text-gray-100 focus:outline-none focus:border-amber-400 leading-relaxed"></textarea>
+                
+                <div class="flex justify-between items-center mt-1 text-[11px] text-gray-400">
+                    <span id="typingStatusIndicator" class="text-amber-400"><i class="fa-solid fa-pen-line"></i> Escribiendo borrador...</span>
+                    <span>Líneas aprox: <strong id="lineCount" class="text-cyan-300">0</strong> | Palabras: <strong id="wordCount" class="text-amber-300">0</strong></span>
+                </div>
+            </div>
+
+            <!-- ACTIONS -->
+            <div class="flex gap-3">
+                <button onclick="closeWritingModal()" class="w-1/3 bg-gray-800 hover:bg-gray-700 text-gray-300 font-semibold py-2.5 rounded-xl text-xs transition">
+                    Guardar Borrador
+                </button>
+                <button onclick="submitFinalWriting()" class="w-2/3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold py-2.5 rounded-xl text-xs transition shadow-lg flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-paper-plane"></i> Enviar Redacción Final al Docente
+                </button>
+            </div>
+
         </div>
-        <div style="margin: 15px 0;">
-            <label>Filtrar por Sala/Grupo:</label>
-            <input type="text" id="filterRoom" placeholder="Escribe la sala..." oninput="renderTeacherData()">
-        </div>
-        <div id="responsesContainer"></div>
     </div>
 
+    <!-- MODAL: DETAILED STUDENT VIEW & TEACHER GRADING -->
+    <div id="detailModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden justify-center items-center p-4 overflow-y-auto">
+        <div class="glass-panel border-2 border-cyan-500/60 p-6 rounded-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-2xl relative">
+            
+            <button onclick="closeDetailModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <!-- Student Profile Header -->
+            <div class="flex items-center gap-3 mb-4 pb-3 border-b border-gray-700">
+                <div class="w-12 h-12 rounded-full bg-emerald-800 border border-emerald-400 flex items-center justify-center text-lg font-bold text-amber-300 shadow" id="detailAvatar">
+                    U
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-white flex items-center gap-2" id="detailStudentName">
+                        Nombre del Estudiante
+                    </h3>
+                    <p class="text-xs text-gray-400">
+                        Sala: <span id="detailStudentRoom" class="text-amber-300 font-semibold">-</span> | 
+                        Elemento: <span id="detailStudentElement" class="text-cyan-300 font-semibold">-</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Full Redaction Display -->
+            <div class="mb-5">
+                <label class="block text-xs font-semibold text-emerald-300 mb-1">
+                    <i class="fa-solid fa-file-lines mr-1"></i> Texto Redactado (5 a 8 líneas):
+                </label>
+                <div id="detailWritingBody" class="bg-black/70 border border-gray-700 rounded-xl p-4 text-sm text-gray-200 min-h-[120px] leading-relaxed whitespace-pre-wrap">
+                    <!-- Redaction text -->
+                </div>
+                <div class="text-right text-[11px] text-gray-400 mt-1" id="detailTimestamp">
+                    Enviado: -
+                </div>
+            </div>
+
+            <!-- TEACHER GRADING SECTION (VISIBLE ONLY TO TEACHER OR VIEWING OWN SCORE) -->
+            <div id="teacherGradingBox" class="bg-amber-950/40 border border-amber-500/50 rounded-xl p-4 text-xs space-y-3">
+                <h4 class="font-bold text-amber-300 flex items-center gap-1.5 text-xs uppercase">
+                    <i class="fa-solid fa-award text-amber-400"></i> Evaluacion y Retroalimentacion del Docente
+                </h4>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div class="md:col-span-1">
+                        <label class="block text-[11px] text-gray-300 mb-1">Calificación (0 - 100):</label>
+                        <input type="number" id="gradeInput" min="0" max="100" placeholder="Ej. 95" 
+                               class="w-full bg-black/60 border border-gray-700 rounded-lg p-2 text-sm text-amber-300 font-bold focus:outline-none focus:border-amber-400">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-[11px] text-gray-300 mb-1">Comentario / Feedback:</label>
+                        <input type="text" id="feedbackInput" placeholder="Excelente análisis biótico..." 
+                               class="w-full bg-black/60 border border-gray-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-amber-400">
+                    </div>
+                </div>
+
+                <div id="teacherSaveGradeBtnWrapper" class="pt-1">
+                    <button onclick="saveTeacherGrade()" class="w-full bg-amber-500 hover:bg-amber-400 text-black font-bold py-2 rounded-lg text-xs transition shadow flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-floppy-disk"></i> Guardar Calificación
+                    </button>
+                </div>
+            </div>
+
+            <!-- Kick / Delete Student Option for Teacher -->
+            <div id="teacherDeleteStudentBox" class="hidden mt-4 pt-3 border-t border-gray-800 text-right">
+                <button onclick="kickStudentFromDetail()" class="bg-red-900/80 hover:bg-red-800 text-red-200 border border-red-500/50 px-3 py-1.5 rounded-lg text-xs transition">
+                    <i class="fa-solid fa-trash-can mr-1"></i> Eliminar Registro del Participante
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- PRINTABLE REPORT CONTAINER (HIDDEN UNTIL PRINT) -->
+    <div id="printableReport" class="hidden p-8 bg-white text-black font-sans">
+        <!-- Dynamic report HTML injected via JavaScript -->
+    </div>
+
+
+    <!-- JAVASCRIPT LOGIC -->
     <script>
-        // CONFIGURACIÓN DE FIREBASE
+        // FIREBASE INITIALIZATION
         const firebaseConfig = {
             apiKey: "AIzaSyCFbiJQ21ly52KCIFms6i6KTPP1EwcQTDs",
             authDomain: "dde-lapaz.firebaseapp.com",
@@ -369,280 +557,476 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let currentUser = { name: '', room: '', studentId: '' };
-        let studentLabels = {};
-        let allResponses = {};
-        let activeTargetKey = '';
-        let mediaRecorder, audioChunks = [], audioBase64 = '';
-        let isTeacherAuthenticated = false;
+        // APP STATE
+        let currentUser = { name: '', room: '', id: '' };
+        let selectedElement = 'Visión General del Ecosistema';
+        let isTeacherMode = false;
+        let allStudentsData = {};
+        let activeDetailStudentId = null;
+        let typingDebounceTimer = null;
 
+        // ON LOAD INITIALIZATION
+        window.addEventListener('DOMContentLoaded', () => {
+            // Check stored user if available
+            const savedUser = localStorage.getItem('profe_biodiv_user');
+            if (savedUser) {
+                try {
+                    currentUser = JSON.parse(savedUser);
+                    setupUserSession();
+                } catch(e) {
+                    document.getElementById('loginOverlay').style.display = 'flex';
+                }
+            } else {
+                document.getElementById('loginOverlay').style.display = 'flex';
+            }
+
+            // Start Realtime Database Listener
+            listenToDatabase();
+        });
+
+        // SESSION START
         function startSession() {
-            const name = document.getElementById('studentName').value.trim();
-            const room = document.getElementById('studentRoom').value.trim();
+            const name = document.getElementById('inputStudentName').value.trim();
+            const room = document.getElementById('inputStudentRoom').value.trim();
+
             if (!name || !room) {
-                alert('Por favor ingresa tu nombre y tu sala para continuar.');
+                alert('Por favor ingresa tu nombre completo y sala/grupo.');
                 return;
             }
-            const cleanId = (name + '_' + room).replace(/[^a-zA-Z0-9]/g, "_");
-            currentUser = { name, room, studentId: cleanId };
-            
-            document.getElementById('displayName').innerText = name;
-            document.getElementById('displayRoom').innerText = room;
+
+            const cleanId = (name + '_' + room).replace(/[^a-zA-Z0-9]/g, "_").toLowerCase();
+            currentUser = { name, room, id: cleanId };
+
+            localStorage.setItem('profe_biodiv_user', JSON.stringify(currentUser));
+            setupUserSession();
+
             document.getElementById('loginOverlay').style.display = 'none';
-            document.getElementById('topInfo').style.display = 'block';
+
+            // Register initial state in Realtime DB if new
+            db.ref('biodiversidad_participantes/' + currentUser.id).once('value', snapshot => {
+                if (!snapshot.exists()) {
+                    db.ref('biodiversidad_participantes/' + currentUser.id).set({
+                        name: currentUser.name,
+                        room: currentUser.room,
+                        selectedElement: selectedElement,
+                        status: 'Redactando...',
+                        text: '',
+                        timestamp: Date.now(),
+                        grade: null,
+                        feedback: ''
+                    });
+                }
+            });
         }
 
-        function openTeacherLogin() {
-            const pass = prompt('Ingresa la contraseña de acceso docente:');
+        function setupUserSession() {
+            document.getElementById('displayName').innerText = currentUser.name;
+            document.getElementById('displayRoom').innerText = currentUser.room;
+            document.getElementById('userInfoBar').classList.remove('hidden');
+            document.getElementById('userInfoBar').classList.add('flex');
+        }
+
+        // TEACHER MODE TOGGLE & AUTH
+        function promptTeacherLogin() {
+            const pass = prompt('Ingresa la clave de acceso docente:');
             if (pass === 'mejia') {
-                isTeacherAuthenticated = true;
+                enableTeacherMode();
                 document.getElementById('loginOverlay').style.display = 'none';
-                document.getElementById('teacherPanel').style.display = 'block';
-                document.getElementById('btnTeacherToggle').style.display = 'block';
-                listenToResponses();
+            } else if (pass !== null) {
+                alert('Clave incorrecta.');
+            }
+        }
+
+        function toggleTeacherMode() {
+            if (!isTeacherMode) {
+                promptTeacherLogin();
             } else {
-                alert('Contraseña incorrecta');
+                disableTeacherMode();
             }
         }
 
-        function toggleTeacherPanel() {
-            if(!isTeacherAuthenticated) return;
-            const panel = document.getElementById('teacherPanel');
-            panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
+        function enableTeacherMode() {
+            isTeacherMode = true;
+            document.getElementById('teacherBtnText').innerText = 'Salir Modo Docente';
+            document.getElementById('btnTeacherToggle').classList.remove('bg-emerald-800');
+            document.getElementById('btnTeacherToggle').classList.add('bg-amber-600', 'border-amber-300');
+            document.getElementById('teacherHeaderTools').classList.remove('hidden');
+            renderStudentWall();
         }
 
-        function closeTeacherPanel() {
-            document.getElementById('teacherPanel').style.display = 'none';
+        function disableTeacherMode() {
+            isTeacherMode = false;
+            document.getElementById('teacherBtnText').innerText = 'Modo Docente';
+            document.getElementById('btnTeacherToggle').classList.add('bg-emerald-800');
+            document.getElementById('btnTeacherToggle').classList.remove('bg-amber-600', 'border-amber-300');
+            document.getElementById('teacherHeaderTools').classList.add('hidden');
+            renderStudentWall();
         }
 
-        function kickStudent(studentId, name) {
-            if (confirm(`¿Estás seguro de que deseas expulsar a "${name}"? Se borrarán sus datos del sistema.`)) {
-                db.ref('respuestas/' + studentId).remove()
-                    .then(() => {
-                        alert(`El participante ${name} ha sido expulsado.`);
-                    })
-                    .catch(err => alert("Error al expulsar: " + err.message));
-            }
+        // SCENE INTERACTION AND HOTSPOTS
+        function selectHotspot(e, name) {
+            e.stopPropagation();
+            selectedElement = name;
+            updateSelectedElementUI();
         }
 
         function handleImageClick(e) {
-            if (e.target.classList.contains('hotspot') || e.target.parentElement.classList.contains('hotspot')) {
-                return;
-            }
-            if(!currentUser.name) {
-                alert('Ingresa tu nombre primero.');
-                return;
-            }
-            document.getElementById('activityModal').style.display = 'flex';
+            // If click wasn't directly on a hotspot icon, allow general scene selection
+            if (e.target.closest('.hotspot')) return;
+            
+            selectedElement = 'Visión General del Ecosistema';
+            updateSelectedElementUI();
         }
 
-        function openLabelModal(e, key) {
-            e.stopPropagation();
-            if(!currentUser.name) {
-                alert('Ingresa tu nombre primero.');
-                return;
-            }
-            activeTargetKey = key;
-            document.getElementById('labelTargetTitle').innerText = 'Identificar: ' + key;
-            document.getElementById('labelInput').value = studentLabels[key] || '';
-            document.getElementById('labelModal').style.display = 'flex';
-        }
+        function updateSelectedElementUI() {
+            document.getElementById('selectedElementName').innerText = selectedElement;
+            document.getElementById('modalSelectedElement').innerText = selectedElement;
 
-        function closeLabelModal() {
-            document.getElementById('labelModal').style.display = 'none';
-        }
-
-        function saveElementLabel() {
-            const val = document.getElementById('labelInput').value.trim();
-            if(val) {
-                studentLabels[activeTargetKey] = val;
-                
-                db.ref('respuestas/' + currentUser.studentId).update({
-                    student: currentUser.name,
-                    room: currentUser.room,
-                    timestamp: Date.now(),
-                    elementLabels: studentLabels
+            // Sync with Realtime DB if logged in
+            if (currentUser.id) {
+                db.ref('biodiversidad_participantes/' + currentUser.id).update({
+                    selectedElement: selectedElement
                 });
             }
-            closeLabelModal();
+
+            // Open modal for writing automatically
+            openWritingModal();
         }
 
-        function closeActivityModal() {
-            document.getElementById('activityModal').style.display = 'none';
-        }
-
-        function addTableRow() {
-            const tbody = document.querySelector('#mathTable tbody');
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td><input type="text" placeholder="Ej. Planta" class="tv-name"></td>
-                <td>
-                    <select class="tv-class">
-                        <option value="Productor">Productor</option>
-                        <option value="Consumidor">Consumidor</option>
-                        <option value="Descomponedor">Descomponedor</option>
-                    </select>
-                </td>
-                <td><input type="number" placeholder="1" class="tv-count"></td>
-            `;
-            tbody.appendChild(row);
-        }
-
-        async function toggleRecording() {
-            const btn = document.getElementById('recBtn');
-            const status = document.getElementById('recStatus');
-
-            if (!mediaRecorder || mediaRecorder.state === 'inactive') {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    mediaRecorder = new MediaRecorder(stream);
-                    audioChunks = [];
-
-                    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-                    mediaRecorder.onstop = () => {
-                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                        const reader = new FileReader();
-                        reader.readAsDataURL(audioBlob);
-                        reader.onloadend = () => {
-                            audioBase64 = reader.result;
-                            const audioPreview = document.getElementById('audioPreview');
-                            audioPreview.src = audioBase64;
-                            audioPreview.style.display = 'block';
-                        };
-                    };
-
-                    mediaRecorder.start();
-                    btn.innerText = '⏹️ Detener';
-                    status.innerText = 'Grabando...';
-                } catch(e) {
-                    alert('Permiso de micrófono denegado o no disponible.');
-                }
-            } else {
-                mediaRecorder.stop();
-                btn.innerText = '🔴 Volver a Grabar';
-                status.innerText = 'Audio Listo';
+        // WRITING MODAL LOGIC
+        function openWritingModal() {
+            if (!currentUser.id) {
+                document.getElementById('loginOverlay').style.display = 'flex';
+                return;
             }
+
+            document.getElementById('modalSelectedElement').innerText = selectedElement;
+            
+            // Populate existing draft if present
+            if (allStudentsData[currentUser.id] && allStudentsData[currentUser.id].text) {
+                document.getElementById('writingTextarea').value = allStudentsData[currentUser.id].text;
+                handleTextTyping();
+            }
+
+            document.getElementById('writingModal').classList.remove('hidden');
+            document.getElementById('writingModal').classList.add('flex');
         }
 
-        function submitAnswers(e) {
-            e.preventDefault();
+        function closeWritingModal() {
+            document.getElementById('writingModal').classList.add('hidden');
+            document.getElementById('writingModal').classList.remove('flex');
+        }
 
-            const tableRows = document.querySelectorAll('#mathTable tbody tr');
-            const tableData = [];
-            tableRows.forEach(row => {
-                const name = row.querySelector('.tv-name').value;
-                const type = row.querySelector('.tv-class').value;
-                const count = row.querySelector('.tv-count').value;
-                if(name) tableData.push({ name, type, count });
+        function handleTextTyping() {
+            const text = document.getElementById('writingTextarea').value;
+            
+            // Calculate words and approximate lines
+            const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+            const lines = text ? text.split('\n').length : 0;
+            
+            document.getElementById('wordCount').innerText = words;
+            document.getElementById('lineCount').innerText = Math.max(lines, Math.ceil(words / 10));
+
+            // Debounce real-time typing sync to Firebase
+            clearTimeout(typingDebounceTimer);
+            document.getElementById('typingStatusIndicator').innerHTML = `<i class="fa-solid fa-spinner fa-spin text-amber-400"></i> Guardando borrador...`;
+
+            typingDebounceTimer = setTimeout(() => {
+                if (currentUser.id) {
+                    db.ref('biodiversidad_participantes/' + currentUser.id).update({
+                        text: text,
+                        status: text.trim() ? 'Redactando...' : 'En blanco',
+                        timestamp: Date.now()
+                    });
+                }
+                document.getElementById('typingStatusIndicator').innerHTML = `<i class="fa-solid fa-check text-emerald-400"></i> Borrador guardado`;
+            }, 800);
+        }
+
+        function submitFinalWriting() {
+            const text = document.getElementById('writingTextarea').value.trim();
+            if (!text) {
+                alert('Escribe tu redacción antes de enviar.');
+                return;
+            }
+
+            db.ref('biodiversidad_participantes/' + currentUser.id).update({
+                text: text,
+                status: 'Enviado',
+                timestamp: Date.now()
+            }).then(() => {
+                alert('¡Tu redacción ha sido enviada con éxito al docente!');
+                closeWritingModal();
+            }).catch(err => {
+                alert('Error al enviar: ' + err.message);
             });
+        }
 
-            const payload = {
-                student: currentUser.name,
-                room: currentUser.room,
-                timestamp: Date.now(),
-                elementLabels: studentLabels,
-                lectura: {
-                    q1: document.getElementById('lectura1').value,
-                    q2: document.getElementById('lectura2').value
-                },
-                escritura: {
-                    q1: document.getElementById('escritura1').value,
-                    q2: document.getElementById('escritura2').value
-                },
-                matematica: {
-                    tabla: tableData,
-                    q2: document.getElementById('math2').value
-                },
-                indagacion: {
-                    q1: document.getElementById('indagacion1').value,
-                    q2: document.getElementById('indagacion2').value
-                },
-                audio: audioBase64
-            };
+        // DATABASE REAL-TIME LISTENER
+        function listenToDatabase() {
+            db.ref('biodiversidad_participantes').on('value', snapshot => {
+                allStudentsData = snapshot.val() || {};
+                renderStudentWall();
 
-            db.ref('respuestas/' + currentUser.studentId).set(payload, (err) => {
-                if(!err) {
-                    alert('¡Excelente! Tus respuestas han sido enviadas al maestro.');
-                    closeActivityModal();
-                } else {
-                    alert('Error al enviar respuestas.');
+                // If detail modal is open, refresh detail data
+                if (activeDetailStudentId && allStudentsData[activeDetailStudentId]) {
+                    populateDetailModal(activeDetailStudentId, allStudentsData[activeDetailStudentId]);
                 }
             });
         }
 
-        function listenToResponses() {
-            db.ref('respuestas').on('value', snapshot => {
-                allResponses = snapshot.val() || {};
-                renderTeacherData();
-            });
-        }
-
-        function renderTeacherData() {
-            const container = document.getElementById('responsesContainer');
-            const filter = document.getElementById('filterRoom').value.toLowerCase();
+        // RENDER REAL-TIME MULTI-USER WALL
+        function renderStudentWall() {
+            const container = document.getElementById('studentsWallContainer');
+            const filterRoom = document.getElementById('filterRoomInput').value.toLowerCase().trim();
             container.innerHTML = '';
 
-            Object.entries(allResponses).forEach(([id, resp]) => {
-                if (filter && !resp.room.toLowerCase().includes(filter)) return;
+            const studentKeys = Object.keys(allStudentsData);
+            document.getElementById('activeCountBadge').innerText = `${studentKeys.length} Participantes`;
 
-                let labelsHtml = '<ul>';
-                if(resp.elementLabels) {
-                    Object.entries(resp.elementLabels).forEach(([elem, val]) => {
-                        labelsHtml += `<li><strong>${elem}:</strong> ${val}</li>`;
-                    });
+            if (studentKeys.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 text-gray-400 text-xs">
+                        <i class="fa-solid fa-pen-fancy text-2xl text-emerald-500/50 mb-2"></i>
+                        <p>Aún no hay redacciones. ¡Sé el primero en participar!</p>
+                    </div>`;
+                return;
+            }
+
+            // Color Themes for Participant Cards
+            const cardGradients = [
+                'from-emerald-950/80 to-gray-900/90 border-emerald-500/40',
+                'from-teal-950/80 to-gray-900/90 border-cyan-500/40',
+                'from-amber-950/70 to-gray-900/90 border-amber-500/40',
+                'from-indigo-950/80 to-gray-900/90 border-indigo-500/40'
+            ];
+
+            studentKeys.forEach((key, index) => {
+                const student = allStudentsData[key];
+                
+                // Filter logic
+                if (filterRoom && !student.room.toLowerCase().includes(filterRoom)) return;
+
+                const isMe = (key === currentUser.id);
+                const gradient = cardGradients[index % cardGradients.length];
+
+                // Status Badge styling
+                let statusBadge = '';
+                if (student.status === 'Enviado') {
+                    statusBadge = `<span class="bg-emerald-900/90 text-emerald-300 border border-emerald-400/50 text-[10px] px-2 py-0.5 rounded-full font-bold">
+                                    <i class="fa-solid fa-check-double mr-1"></i> Enviado
+                                  </span>`;
+                } else if (student.text && student.text.trim()) {
+                    statusBadge = `<span class="bg-amber-900/90 text-amber-300 border border-amber-400/50 text-[10px] px-2 py-0.5 rounded-full font-bold card-status-writing">
+                                    <i class="fa-solid fa-pen-line mr-1"></i> Redactando...
+                                  </span>`;
                 } else {
-                    labelsHtml += '<li><em>Sin etiquetas asignadas aún</em></li>';
+                    statusBadge = `<span class="bg-gray-800 text-gray-400 border border-gray-600 text-[10px] px-2 py-0.5 rounded-full">
+                                    En blanco
+                                  </span>`;
                 }
-                labelsHtml += '</ul>';
 
-                let tableHtml = '<ul>';
-                if(resp.matematica && resp.matematica.tabla) {
-                    resp.matematica.tabla.forEach(item => {
-                        tableHtml += `<li>${item.name} (${item.type}): ${item.count}</li>`;
-                    });
-                }
-                tableHtml += ' his HTML';
+                // Grade Tag if present
+                const gradeTag = student.grade !== undefined && student.grade !== null 
+                    ? `<span class="bg-amber-500 text-black font-extrabold text-xs px-2 py-0.5 rounded-md shadow">
+                        ${student.grade}/100
+                       </span>`
+                    : '';
+
+                const textSnippet = student.text && student.text.trim()
+                    ? student.text
+                    : '<em class="text-gray-500">Aún no ha redactado su texto...</em>';
 
                 const card = document.createElement('div');
-                card.className = 'student-item';
+                card.className = `bg-gradient-to-r ${gradient} border rounded-xl p-3 shadow-lg transition duration-200 hover:scale-[1.01] cursor-pointer relative group`;
+                card.onclick = () => openDetailModal(key);
+
                 card.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div class="flex justify-between items-start mb-2">
                         <div>
-                            <strong>👤 ${resp.student}</strong> 
-                            <span class="tag-room">${resp.room}</span>
+                            <div class="flex items-center gap-1.5">
+                                <strong class="text-sm font-bold text-white">${student.name}</strong>
+                                ${isMe ? '<span class="bg-emerald-500 text-black text-[9px] font-extrabold px-1.5 py-0.2 rounded">TÚ</span>' : ''}
+                            </div>
+                            <p class="text-[11px] text-gray-400">
+                                <i class="fa-solid fa-users text-amber-400"></i> ${student.room} | 
+                                <span class="text-cyan-300"><i class="fa-solid fa-crosshairs"></i> ${student.selectedElement || 'Ecosistema'}</span>
+                            </p>
                         </div>
-                        <button class="btn-kick" onclick="kickStudent('${id}', '${resp.student}')">🗑️ Expulsar</button>
+                        <div class="flex flex-col items-end gap-1">
+                            ${statusBadge}
+                            ${gradeTag}
+                        </div>
                     </div>
-                    
-                    <div class="details-box">
-                        <p style="color:#ff8f00; font-weight:bold; margin-top:0;">📍 Nombres asignados en los puntos:</p>
-                        ${labelsHtml}
-                        
-                        <p style="color:#81c784; font-weight:bold;">📖 Lectura / Escritura:</p>
-                        <p><strong>Párrafo:</strong> ${resp.escritura ? resp.escritura.q1 : 'Pendiente'}</p>
 
-                        <p style="color:#81c784; font-weight:bold;">🧮 Seres Vivos Contados:</p>
-                        ${tableHtml}
+                    <div class="bg-black/50 rounded-lg p-2.5 text-xs text-gray-300 line-clamp-3 leading-relaxed border border-gray-800/80">
+                        ${textSnippet}
+                    </div>
 
-                        ${resp.audio ? `<p style="color:#81c784; font-weight:bold;">🎙️ Audio enviado:<br><audio src="${resp.audio}" controls style="width:100%; height:30px; margin-top:5px;"></audio></p>` : ''}
+                    <div class="mt-2 flex justify-between items-center text-[10px] text-gray-400">
+                        <span>Haz clic para ver completo</span>
+                        <span class="text-cyan-400 group-hover:underline"><i class="fa-solid fa-expand"></i> Ampliar</span>
                     </div>
                 `;
+
                 container.appendChild(card);
             });
         }
 
-        // EFECTO 3D
-        const container = document.getElementById('sceneContainer');
-        const wrapper = document.getElementById('imageWrapper');
-        container.addEventListener('mousemove', (e) => {
-            const xAxis = (window.innerWidth / 2 - e.clientX) / 40;
-            const yAxis = (window.innerHeight / 2 - e.clientY) / 40;
-            wrapper.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
-        });
-        container.addEventListener('mouseleave', () => {
-            wrapper.style.transform = `rotateY(0deg) rotateX(0deg)`;
-        });
+        // DETAIL & GRADING MODAL LOGIC
+        function openDetailModal(studentId) {
+            activeDetailStudentId = studentId;
+            const student = allStudentsData[studentId];
+            if (!student) return;
+
+            populateDetailModal(studentId, student);
+
+            document.getElementById('detailModal').classList.remove('hidden');
+            document.getElementById('detailModal').classList.add('flex');
+        }
+
+        function populateDetailModal(studentId, student) {
+            document.getElementById('detailAvatar').innerText = student.name ? student.name.charAt(0).toUpperCase() : 'U';
+            document.getElementById('detailStudentName').innerText = student.name || 'Sin nombre';
+            document.getElementById('detailStudentRoom').innerText = student.room || '-';
+            document.getElementById('detailStudentElement').innerText = student.selectedElement || 'Ecosistema';
+
+            const writingBody = document.getElementById('detailWritingBody');
+            if (student.text && student.text.trim()) {
+                writingBody.innerHTML = student.text;
+                writingBody.classList.remove('text-gray-500', 'italic');
+            } else {
+                writingBody.innerHTML = '<em>El participante aún no ha redactado texto o está en blanco.</em>';
+                writingBody.classList.add('text-gray-500', 'italic');
+            }
+
+            const timeStr = student.timestamp ? new Date(student.timestamp).toLocaleTimeString() : '-';
+            document.getElementById('detailTimestamp').innerText = `Última actualización: ${timeStr}`;
+
+            // Setup Grading inputs
+            document.getElementById('gradeInput').value = (student.grade !== undefined && student.grade !== null) ? student.grade : '';
+            document.getElementById('feedbackInput').value = student.feedback || '';
+
+            // Show teacher tools if in Teacher Mode
+            const teacherBox = document.getElementById('teacherGradingBox');
+            const teacherDeleteBox = document.getElementById('teacherDeleteStudentBox');
+
+            if (isTeacherMode) {
+                teacherBox.classList.remove('hidden');
+                teacherDeleteBox.classList.remove('hidden');
+                document.getElementById('gradeInput').disabled = false;
+                document.getElementById('feedbackInput').disabled = false;
+                document.getElementById('teacherSaveGradeBtnWrapper').classList.remove('hidden');
+            } else {
+                // If not teacher, only view grade if available
+                if (student.grade !== undefined && student.grade !== null) {
+                    teacherBox.classList.remove('hidden');
+                    document.getElementById('gradeInput').disabled = true;
+                    document.getElementById('feedbackInput').disabled = true;
+                    document.getElementById('teacherSaveGradeBtnWrapper').classList.add('hidden');
+                } else {
+                    teacherBox.classList.add('hidden');
+                }
+                teacherDeleteBox.classList.add('hidden');
+            }
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detailModal').classList.add('hidden');
+            document.getElementById('detailModal').classList.remove('flex');
+            activeDetailStudentId = null;
+        }
+
+        function saveTeacherGrade() {
+            if (!activeDetailStudentId) return;
+
+            const gradeVal = document.getElementById('gradeInput').value;
+            const feedbackVal = document.getElementById('feedbackInput').value.trim();
+
+            const gradeNum = gradeVal !== '' ? parseInt(gradeVal) : null;
+
+            db.ref('biodiversidad_participantes/' + activeDetailStudentId).update({
+                grade: gradeNum,
+                feedback: feedbackVal
+            }).then(() => {
+                alert('Calificación guardada correctamente.');
+                closeDetailModal();
+            }).catch(err => {
+                alert('Error al guardar calificación: ' + err.message);
+            });
+        }
+
+        function kickStudentFromDetail() {
+            if (!activeDetailStudentId) return;
+            const student = allStudentsData[activeDetailStudentId];
+
+            if (confirm(`¿Estás seguro de expulsar y eliminar la redacción de "${student.name}"?`)) {
+                db.ref('biodiversidad_participantes/' + activeDetailStudentId).remove()
+                    .then(() => {
+                        alert('Participante eliminado.');
+                        closeDetailModal();
+                    });
+            }
+        }
+
+        // GENERATE REPORT & PRINT
+        function generateReport() {
+            const keys = Object.keys(allStudentsData);
+            if (keys.length === 0) {
+                alert('No hay datos para generar el reporte.');
+                return;
+            }
+
+            let reportRows = '';
+            keys.forEach((key, index) => {
+                const s = allStudentsData[key];
+                const gradeText = s.grade !== undefined && s.grade !== null ? `${s.grade}/100` : 'Sin calificar';
+                const feedbackText = s.feedback ? s.feedback : '-';
+                const dateText = s.timestamp ? new Date(s.timestamp).toLocaleString() : '-';
+
+                reportRows += `
+                    <tr style="border-bottom: 1px solid #ddd;">
+                        <td style="padding: 8px; font-weight: bold;">${index + 1}</td>
+                        <td style="padding: 8px;">${s.name || '-'}</td>
+                        <td style="padding: 8px;">${s.room || '-'}</td>
+                        <td style="padding: 8px;">${s.selectedElement || 'Ecosistema'}</td>
+                        <td style="padding: 8px; max-width: 300px; font-size: 11px; font-style: italic;">${s.text || 'Sin redacción'}</td>
+                        <td style="padding: 8px; font-weight: bold; color: #1b5e20;">${gradeText}</td>
+                        <td style="padding: 8px; font-size: 11px;">${feedbackText}</td>
+                        <td style="padding: 8px; font-size: 10px; color: #666;">${dateText}</td>
+                    </tr>
+                `;
+            });
+
+            const reportContainer = document.getElementById('printableReport');
+            reportContainer.innerHTML = `
+                <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #1b5e20; padding-bottom: 10px;">
+                    <h1 style="font-size: 20px; color: #1b5e20; margin: 0;">PROFE - Recursos Educativos</h1>
+                    <h2 style="font-size: 16px; margin: 5px 0;">Reporte Consolidado: Redacción sobre Biodiversidad</h2>
+                    <p style="font-size: 11px; color: #555; margin: 0;">Generado el: ${new Date().toLocaleString()}</p>
+                </div>
+
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 12px;">
+                    <thead>
+                        <tr style="background-color: #f2f2f2; border-bottom: 2px solid #333;">
+                            <th style="padding: 8px;">#</th>
+                            <th style="padding: 8px;">Estudiante</th>
+                            <th style="padding: 8px;">Sala/Grupo</th>
+                            <th style="padding: 8px;">Elemento</th>
+                            <th style="padding: 8px;">Redacción (5-8 líneas)</th>
+                            <th style="padding: 8px;">Nota</th>
+                            <th style="padding: 8px;">Observación Docente</th>
+                            <th style="padding: 8px;">Fecha/Hora</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${reportRows}
+                    </tbody>
+                </table>
+            `;
+
+            window.print();
+        }
     </script>
 </body>
 </html>
-
