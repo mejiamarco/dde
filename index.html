@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Laboratorio Interactivo de Biodiversidad - PROFE</title>
+    <title>Laboratorio PROFE</title>
 
     <!-- Firebase SDK (v9 compat) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -325,11 +325,11 @@
                     <span class="profe-subtext">PROGRAMA</span>
                 </div>
 
-                <h2>EVALUACIÓN DIAGNÓSTICA</h2>
+                <h2>ACTIVIDADES PARA FORTALECER LA ESCRITURA </h2>
                 <div class="subtitle">Autenticación para iniciar el entorno de laboratorio.</div>
 
                 <div class="form-group-login">
-                    <label>NOMBRE COMPLETO / REGISTRO</label>
+                    <label>NOMBRE COMPLETO</label>
                     <input type="text" id="studentName" class="input-neon-red" placeholder="Ingrese su nombre registrado">
                 </div>
 
@@ -338,7 +338,7 @@
                     <input type="text" id="studentRoom" class="input-neon-yellow" placeholder="Escriba la sala (ej. GRUPO_A)" style="text-transform: uppercase;">
                 </div>
 
-                <button class="btn-primary" onclick="startSession()">Ingresar a la Experiencia</button>
+                <button class="btn-primary" type="button" onclick="startSession()">Ingresar</button>
                 <span class="teacher-link" onclick="openTeacherLogin()">Acceso Docente</span>
             </div>
         </div>
@@ -447,7 +447,7 @@
     </div>
 
     <script>
-        // CONFIGURACIÓN DE FIREBASE REALTIME DATABASE
+        // CONFIGURACIÓN DE FIREBASE REALTIME DATABASE CON FALLBACK LOCAL
         const firebaseConfig = {
             apiKey: "AIzaSyCFbiJQ21ly52KCIFms6i6KTPP1EwcQTDs",
             authDomain: "dde-lapaz.firebaseapp.com",
@@ -458,8 +458,15 @@
             appId: "1:665712008298:web:6a8680b1b4117422047e13"
         };
 
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+        let db = null;
+        try {
+            if (typeof firebase !== 'undefined') {
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.database();
+            }
+        } catch (e) {
+            console.warn("Firebase no conectado o sin red, trabajando en modo local/memoria:", e);
+        }
 
         let currentUser = { name: '', room: '', studentId: '' };
         let studentLabels = {};
@@ -468,41 +475,55 @@
         let isTeacherAuthenticated = false;
 
         function startSession() {
-            const name = document.getElementById('studentName').value.trim();
-            const room = document.getElementById('studentRoom').value.trim().toUpperCase();
-            if (!name || !room) {
-                alert('Por favor ingresa tu nombre y el código de sala.');
-                return;
+            try {
+                const nameInput = document.getElementById('studentName');
+                const roomInput = document.getElementById('studentRoom');
+                const name = nameInput ? nameInput.value.trim() : '';
+                const room = roomInput ? roomInput.value.trim().toUpperCase() : '';
+
+                if (!name || !room) {
+                    alert('Por favor ingresa tu nombre y el código de sala.');
+                    return;
+                }
+                const cleanId = name.replace(/[^a-zA-Z0-9]/g, "_");
+                currentUser = { name, room, studentId: cleanId };
+
+                document.getElementById('loginOverlay').style.display = 'none';
+                document.getElementById('lblActiveRoom').innerText = room;
+
+                if (db) {
+                    db.ref(`salas_biodiversidad/${room}/participantes/${cleanId}`).on('value', snapshot => {
+                        const val = snapshot.val();
+                        if (val && val.elementLabels) studentLabels = val.elementLabels;
+                    }, err => console.log("Firebase error:", err));
+                }
+            } catch (err) {
+                console.error("Error en startSession:", err);
+                document.getElementById('loginOverlay').style.display = 'none';
             }
-            const cleanId = name.replace(/[^a-zA-Z0-9]/g, "_");
-            currentUser = { name, room, studentId: cleanId };
-
-            document.getElementById('loginOverlay').style.display = 'none';
-            document.getElementById('lblActiveRoom').innerText = room;
-
-            db.ref(`salas_biodiversidad/${room}/participantes/${cleanId}`).on('value', snapshot => {
-                const val = snapshot.val();
-                if (val && val.elementLabels) studentLabels = val.elementLabels;
-            });
         }
 
         function openTeacherLogin() {
-            const pass = prompt('Ingresa la contraseña docente:');
-            if (pass === 'mejia') {
-                const room = prompt('Ingresa el Código de la Sala a moderar (ej. GRUPO_A):', 'GRUPO_A');
-                if(!room) return;
+            try {
+                const pass = prompt('Ingresa la contraseña docente:');
+                if (pass === 'mejia') {
+                    const room = prompt('Ingresa el Código de la Sala a moderar (ej. GRUPO_A):', 'GRUPO_A');
+                    if (!room) return;
 
-                isTeacherAuthenticated = true;
-                currentUser.room = room.trim().toUpperCase();
-                document.getElementById('lblActiveRoom').innerText = currentUser.room;
-                
-                document.getElementById('loginOverlay').style.display = 'none';
-                document.getElementById('btnTeacherToggle').style.display = 'block';
-                document.getElementById('teacherSidebar').classList.add('active');
-                
-                listenToRoomData();
-            } else {
-                alert('Contraseña incorrecta');
+                    isTeacherAuthenticated = true;
+                    currentUser.room = room.trim().toUpperCase();
+                    document.getElementById('lblActiveRoom').innerText = currentUser.room;
+                    
+                    document.getElementById('loginOverlay').style.display = 'none';
+                    document.getElementById('btnTeacherToggle').style.display = 'block';
+                    document.getElementById('teacherSidebar').classList.add('active');
+                    
+                    listenToRoomData();
+                } else if (pass !== null) {
+                    alert('Contraseña incorrecta');
+                }
+            } catch (err) {
+                console.error("Error en openTeacherLogin:", err);
             }
         }
 
@@ -540,11 +561,13 @@
             const val = document.getElementById('labelInput').value.trim();
             if (val) {
                 studentLabels[activeTargetKey] = val;
-                db.ref(`salas_biodiversidad/${currentUser.room}/participantes/${currentUser.studentId}`).update({
-                    student: currentUser.name,
-                    timestamp: Date.now(),
-                    elementLabels: studentLabels
-                });
+                if (db) {
+                    db.ref(`salas_biodiversidad/${currentUser.room}/participantes/${currentUser.studentId}`).update({
+                        student: currentUser.name,
+                        timestamp: Date.now(),
+                        elementLabels: studentLabels
+                    });
+                }
             }
             closeModal('labelModal');
         }
@@ -565,31 +588,41 @@
                 return;
             }
 
-            db.ref(`salas_biodiversidad/${currentUser.room}/participantes/${currentUser.studentId}`).update({
-                student: currentUser.name,
-                redaccion: text,
-                status: 'Entregado',
-                timestamp: Date.now()
-            }, (err) => {
-                if (!err) {
-                    alert('¡Redacción enviada correctamente al docente!');
-                    closeModal('activityModal');
-                } else {
-                    alert('Error al enviar la redacción.');
-                }
-            });
+            if (db) {
+                db.ref(`salas_biodiversidad/${currentUser.room}/participantes/${currentUser.studentId}`).update({
+                    student: currentUser.name,
+                    redaccion: text,
+                    status: 'Entregado',
+                    timestamp: Date.now()
+                }, (err) => {
+                    if (!err) {
+                        alert('¡Redacción enviada correctamente al docente!');
+                        closeModal('activityModal');
+                    } else {
+                        alert('Error al enviar la redacción.');
+                    }
+                });
+            } else {
+                alert('¡Redacción guardada en modo local!');
+                closeModal('activityModal');
+            }
         }
 
         function listenToRoomData() {
-            db.ref(`salas_biodiversidad/${currentUser.room}/participantes`).on('value', snapshot => {
-                allResponses = snapshot.val() || {};
+            if (db) {
+                db.ref(`salas_biodiversidad/${currentUser.room}/participantes`).on('value', snapshot => {
+                    allResponses = snapshot.val() || {};
+                    renderTeacherData();
+                });
+            } else {
                 renderTeacherData();
-            });
+            }
         }
 
         function renderTeacherData() {
             const container = document.getElementById('responsesContainer');
-            const filter = document.getElementById('filterStudent').value.toLowerCase();
+            const filterInput = document.getElementById('filterStudent');
+            const filter = filterInput ? filterInput.value.toLowerCase() : '';
             container.innerHTML = '';
 
             const borderColors = ['border-green', 'border-yellow', 'border-red'];
@@ -647,18 +680,21 @@
 
         function saveGrade(studentId) {
             const gradeVal = document.getElementById(`grade_${studentId}`).value;
-            db.ref(`salas_biodiversidad/${currentUser.room}/participantes/${studentId}`).update({
-                nota: gradeVal
-            }, () => alert('Calificación guardada.'));
+            if (db) {
+                db.ref(`salas_biodiversidad/${currentUser.room}/participantes/${studentId}`).update({
+                    nota: gradeVal
+                }, () => alert('Calificación guardada.'));
+            }
         }
 
         function kickStudent(studentId, name) {
             if (confirm(`¿Eliminar a "${name}" de esta sala?`)) {
-                db.ref(`salas_biodiversidad/${currentUser.room}/participantes/${studentId}`).remove();
+                if (db) {
+                    db.ref(`salas_biodiversidad/${currentUser.room}/participantes/${studentId}`).remove();
+                }
             }
         }
 
-        /* MOSTRAR VISTA PREVIA DEL REPORTE EN PANTALLA MODAL */
         function openReportPreviewModal() {
             const container = document.getElementById('reportTableContainer');
             
@@ -708,7 +744,6 @@
             closeModal('reportPreviewModal');
         }
 
-        // GENERACIÓN Y DESCARGA DEL ARCHIVO PDF CON jspdf
         function generatePDFReport() {
             if (!window.jspdf) {
                 alert('Cargando librería PDF, por favor intenta en unos segundos...');
