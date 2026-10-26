@@ -2,684 +2,351 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Laboratorio Interactivo de Biodiversidad - PROFE</title>
 
     <!-- Firebase SDK (v9 compat) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-    
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
         :root {
-            --primary: #1b5e20;
-            --primary-light: #2e7d32;
-            --accent: #ff8f00;
-            --accent-glow: rgba(255, 143, 0, 0.4);
-            --gold: #ffd700;
-            --neon-green: #00ff88;
-            --dark-bg: #070c09;
-            --panel-bg: rgba(13, 23, 16, 0.92);
-            --glass-border: rgba(129, 199, 132, 0.25);
-            --card-glow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+            --primary: #00ff88;
+            --accent-yellow: #ffd700;
+            --accent-red: #ff3366;
+            --dark-bg: #090d0a;
+            --panel-bg: rgba(12, 20, 15, 0.96);
+            --neon-green-glow: 0 0 15px rgba(0, 255, 136, 0.6);
+            --neon-yellow-glow: 0 0 15px rgba(255, 215, 0, 0.6);
+            --neon-red-glow: 0 0 15px rgba(255, 51, 102, 0.6);
         }
 
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body, html {
-            margin: 0; padding: 0;
             width: 100%; height: 100vh;
-            overflow-x: hidden;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--dark-bg);
-            color: #e8f5e9;
-        }
-
-        /* HEADER INSTRUCCIÓN PRINCIPAL */
-        .instruction-header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background: rgba(7, 12, 9, 0.95);
-            border-bottom: 2px solid var(--accent);
-            padding: 10px 20px;
-            z-index: 120;
-            text-align: center;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.8);
-            backdrop-filter: blur(8px);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 15px;
-        }
-
-        .instruction-header h1 {
-            margin: 0;
-            font-size: 1.05rem;
             color: #fff;
-            font-weight: 600;
-            line-height: 1.3;
         }
 
-        .instruction-header h1 span {
-            color: var(--gold);
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+        /* BARRA DE CONSIGNA SUPERIOR */
+        .consigna-bar {
+            position: fixed; top: 0; left: 0; right: 0; height: 48px;
+            background: rgba(10, 15, 12, 0.98);
+            border-bottom: 2px solid var(--accent-yellow);
+            box-shadow: var(--neon-yellow-glow);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 20px; z-index: 100; font-size: 0.85rem; font-weight: 600;
         }
-
-        /* BARRA SUPERIOR INFO USUARIO */
-        .top-info {
-            background: rgba(27, 94, 32, 0.4);
-            padding: 6px 14px;
-            border-radius: 20px;
-            border: 1px solid var(--glass-border);
-            font-size: 0.82rem;
-            white-space: nowrap;
+        .consigna-text {
+            color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 70vw;
         }
+        .consigna-text span { color: var(--accent-yellow); font-weight: bold; }
 
-        /* BOTÓN DOCENTE FLOTANTE */
         .btn-teacher-toggle {
-            background: linear-gradient(135deg, #1b5e20, #2e7d32);
-            border: 1.5px solid var(--neon-green);
-            color: #fff;
-            padding: 8px 16px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 0.85rem;
-            box-shadow: 0 0 12px rgba(0, 255, 136, 0.3);
-            display: none;
-            transition: all 0.3s ease;
-            white-space: nowrap;
+            background: #111; border: 2px solid var(--primary); color: var(--primary);
+            padding: 6px 14px; border-radius: 20px; cursor: pointer;
+            font-weight: bold; font-size: 0.8rem; box-shadow: var(--neon-green-glow);
+            transition: 0.2s; display: none;
         }
-        .btn-teacher-toggle:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 0 20px rgba(0, 255, 136, 0.6);
-        }
+        .btn-teacher-toggle:hover { background: var(--primary); color: #000; }
 
-        /* TÍTULO PROFE DECORATIVO DENTRO DE LA IMAGEN */
-        .profe-badge-title {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            z-index: 25;
-            font-family: 'Georgia', serif;
-            font-size: 1.5rem;
-            font-weight: 900;
-            letter-spacing: 1.5px;
-            background: linear-gradient(135deg, #fff2a3 0%, #ffd700 40%, #cca000 80%, #ffae00 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 2px 6px rgba(0,0,0,0.95));
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            pointer-events: none;
-            user-select: none;
-            background-color: rgba(7, 12, 9, 0.75);
-            padding: 6px 14px;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 215, 0, 0.5);
-            backdrop-filter: blur(6px);
-        }
-
-        .profe-badge-title span {
-            font-size: 0.7rem;
-            font-family: 'Segoe UI', sans-serif;
-            font-weight: 600;
-            letter-spacing: 1px;
-            color: #e0e0e0;
-            -webkit-text-fill-color: #e0e0e0;
-            background: rgba(0,0,0,0.6);
-            padding: 3px 8px;
-            border-radius: 12px;
-            border: 1px solid var(--gold);
-        }
-
-        /* LOGIN / REGISTRO OVERLAY */
+        /* PANTALLA DE ACCESO Y SALAS */
         #loginOverlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(7, 12, 9, 0.96); z-index: 1000;
-            display: flex; justify-content: center; align-items: center;
-            backdrop-filter: blur(10px);
+            background: rgba(5, 8, 6, 0.97); z-index: 1000;
+            display: flex; justify-content: center; align-items: center; padding: 15px;
         }
         .login-card {
             background: var(--panel-bg);
-            border: 2px solid var(--accent);
-            padding: 35px 30px; border-radius: 20px; width: 90%; max-width: 420px;
-            text-align: center; box-shadow: 0 15px 40px rgba(0,0,0,0.9), 0 0 20px var(--accent-glow);
+            border: 2px solid var(--primary);
+            box-shadow: var(--neon-green-glow);
+            padding: 30px; border-radius: 20px; width: 100%; max-width: 420px;
+            text-align: center;
         }
-        .login-card h2 { color: var(--neon-green); margin-top: 0; margin-bottom: 10px; font-size: 1.5rem; }
-        .login-card p { font-size: 0.85rem; color: #a5d6a7; margin-bottom: 20px; }
-        .login-card input {
-            width: 100%; padding: 12px 15px; margin: 8px 0; border-radius: 10px;
-            border: 1px solid var(--glass-border); background: rgba(0,0,0,0.6);
-            color: #fff; font-size: 0.95rem; outline: none; transition: 0.3s;
+        .login-card h2 { color: var(--primary); margin-bottom: 20px; font-size: 1.4rem; text-shadow: 0 0 8px var(--primary); }
+        .login-card input, .login-card select {
+            width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.6);
+            color: #fff; font-size: 0.95rem; outline: none;
         }
-        .login-card input:focus { border-color: var(--accent); box-shadow: 0 0 10px var(--accent-glow); }
+        .login-card input:focus { border-color: var(--primary); box-shadow: var(--neon-green-glow); }
         .btn-primary {
-            width: 100%; padding: 12px; background: linear-gradient(135deg, var(--accent), #ff6f00); border: none;
-            color: #fff; font-weight: bold; border-radius: 10px; cursor: pointer;
-            margin-top: 15px; font-size: 1rem; transition: all 0.2s ease;
-            box-shadow: 0 4px 15px rgba(255, 143, 0, 0.3);
+            width: 100%; padding: 12px; background: var(--primary); border: none;
+            color: #000; font-weight: bold; border-radius: 10px; cursor: pointer;
+            margin-top: 12px; font-size: 1rem; transition: 0.2s;
+            box-shadow: var(--neon-green-glow);
         }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255, 143, 0, 0.5); }
+        .btn-primary:hover { background: #55ffb0; }
         .teacher-link {
-            display: block; margin-top: 18px; font-size: 0.85rem; color: #b0bec5;
-            cursor: pointer; text-decoration: underline; transition: 0.2s;
-        }
-        .teacher-link:hover { color: var(--gold); }
-
-        /* LAYOUT PRINCIPAL: DUAL PANEL (IMAGEN CENTRADA / PANEL DOCENTE A LA DERECHA) */
-        .main-workspace {
-            display: flex;
-            width: 100vw;
-            height: calc(100vh - 55px);
-            margin-top: 55px;
-            position: relative;
-            overflow: hidden;
+            display: block; margin-top: 15px; font-size: 0.85rem; color: #aaa;
+            cursor: pointer; text-decoration: underline;
         }
 
-        /* SCENE CONTAINER */
+        /* LAYOUT PRINCIPAL */
+        .main-container {
+            display: flex; width: 100vw; height: calc(100vh - 48px);
+            margin-top: 48px; position: relative; overflow: hidden;
+        }
+
+        /* ÁREA DE LA IMAGEN CENTRAL (SITUACIÓN FIJA SIN ROTACIÓN 3D) */
         .scene-container {
-            flex: 1;
-            position: relative;
-            height: 100%;
-            perspective: 1200px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            transition: all 0.3s ease;
+            flex: 1; display: flex; justify-content: center; align-items: center;
+            padding: 15px; position: relative; overflow: auto;
         }
-
         .eco-image-wrapper {
-            position: relative;
-            width: 100%;
-            max-width: 1050px;
-            max-height: 82vh;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.9), 0 0 1px 1px var(--glass-border);
-            transition: transform 0.1s ease-out;
-            transform-style: preserve-3d;
-            cursor: pointer;
-            overflow: hidden;
+            position: relative; width: 100%; max-width: 1050px;
+            border-radius: 16px; border: 3px solid var(--accent-yellow);
+            box-shadow: var(--neon-yellow-glow); background: #000; overflow: hidden;
         }
-
         .eco-image-wrapper img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-            border-radius: 16px;
+            width: 100%; height: auto; display: block; pointer-events: auto;
         }
 
-        /* PUNTOS HOTSPOTS SOBRE LA IMAGEN */
+        /* TITULO PROFE INTEGRADO SOBRE LA IMAGEN */
+        .profe-badge-title {
+            position: absolute; top: 12px; left: 12px; z-index: 25;
+            font-family: 'Georgia', serif; font-size: 1.3rem; font-weight: 900;
+            background: linear-gradient(135deg, #fff2a3 0%, #ffd700 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            display: flex; align-items: center; gap: 8px; pointer-events: none;
+            background-color: rgba(0, 0, 0, 0.75); padding: 5px 12px;
+            border-radius: 10px; border: 1px solid var(--accent-yellow);
+            backdrop-filter: blur(4px);
+        }
+        .profe-badge-title span {
+            font-size: 0.7rem; font-family: 'Segoe UI', sans-serif; font-weight: 600;
+            color: #fff; -webkit-text-fill-color: #fff; background: rgba(255,255,255,0.15);
+            padding: 2px 6px; border-radius: 10px; border: 1px solid var(--accent-yellow);
+        }
+
+        /* PUNTOS HOTSPOTS EXTENDIDOS (NEÓN MULTICOLOR) */
         .hotspot {
-            position: absolute; width: 34px; height: 34px; background-color: var(--accent);
-            border: 2.5px solid #ffffff; border-radius: 50%; cursor: pointer;
-            transform: translate(-50%, -50%); box-shadow: 0 0 20px rgba(255, 143, 0, 0.9);
-            animation: pulse 2s infinite; z-index: 20; display: flex; align-items: center;
-            justify-content: center; font-weight: bold; font-size: 0.9rem; color: #000;
+            position: absolute; width: 28px; height: 28px;
+            border: 2px solid #fff; border-radius: 50%; cursor: pointer;
+            transform: translate(-50%, -50%); z-index: 20;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 0.75rem; color: #000;
             transition: transform 0.2s;
         }
-        .hotspot:hover { transform: translate(-50%, -50%) scale(1.25); animation: none; }
+        .hotspot:hover { transform: translate(-50%, -50%) scale(1.25); }
         .hotspot span {
-            display: none; position: absolute; bottom: 40px; background: rgba(0, 0, 0, 0.9);
-            color: #fff; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem;
-            white-space: nowrap; border: 1px solid var(--accent); box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-            pointer-events: none;
+            display: none; position: absolute; bottom: 32px; background: #000;
+            color: #fff; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem;
+            white-space: nowrap; border: 1px solid currentColor; box-shadow: 0 0 10px rgba(0,0,0,0.8);
         }
         .hotspot:hover span { display: block; }
 
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(255, 143, 0, 0.8); }
-            70% { box-shadow: 0 0 0 14px rgba(255, 143, 0, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(255, 143, 0, 0); }
+        /* Estilos de puntos por color neón */
+        .hs-green { background-color: var(--primary); box-shadow: var(--neon-green-glow); color: #000; }
+        .hs-yellow { background-color: var(--accent-yellow); box-shadow: var(--neon-yellow-glow); color: #000; }
+        .hs-red { background-color: var(--accent-red); box-shadow: var(--neon-red-glow); color: #fff; }
+
+        /* PANEL DEL DOCENTE LATERAL DERECHO */
+        .teacher-sidebar {
+            width: 380px; height: 100%; background: var(--panel-bg);
+            border-left: 2px solid var(--accent-red); box-shadow: var(--neon-red-glow);
+            padding: 15px; overflow-y: auto; display: none; flex-direction: column; gap: 12px;
+            z-index: 200;
+        }
+        .teacher-sidebar.active { display: flex; }
+        .sidebar-header {
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 10px;
+        }
+        .sidebar-header h3 { color: var(--accent-red); text-shadow: 0 0 8px var(--accent-red); font-size: 1.1rem; }
+        .filter-box input {
+            width: 100%; padding: 8px 12px; border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.5);
+            color: #fff; font-size: 0.85rem; outline: none;
         }
 
-        /* MODALES */
+        /* RECUADROS DE ESTUDIANTES EN TIEMPO REAL */
+        .student-card {
+            background: rgba(0,0,0,0.6); border-radius: 12px; padding: 12px;
+            border: 2px solid var(--primary); box-shadow: var(--neon-green-glow);
+            display: flex; flex-direction: column; gap: 8px; position: relative;
+        }
+        .student-card.border-yellow { border-color: var(--accent-yellow); box-shadow: var(--neon-yellow-glow); }
+        .student-card.border-red { border-color: var(--accent-red); box-shadow: var(--neon-red-glow); }
+
+        .card-head { display: flex; justify-content: space-between; align-items: center; }
+        .student-name { font-weight: bold; font-size: 0.9rem; color: #fff; }
+        .status-pill {
+            font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; font-weight: bold;
+        }
+        .status-pending { background: rgba(255, 215, 0, 0.2); color: var(--accent-yellow); border: 1px solid var(--accent-yellow); }
+        .status-submitted { background: rgba(0, 255, 136, 0.2); color: var(--primary); border: 1px solid var(--primary); }
+
+        .card-body { font-size: 0.8rem; color: #ddd; display: flex; flex-direction: column; gap: 6px; }
+        .redaccion-preview {
+            background: rgba(255,255,255,0.05); padding: 8px; border-radius: 6px;
+            border-left: 3px solid var(--accent-yellow); font-style: italic; white-space: pre-wrap;
+        }
+        .grade-row { display: flex; gap: 6px; align-items: center; margin-top: 4px; }
+        .grade-input {
+            width: 60px; padding: 4px 6px; background: rgba(0,0,0,0.8);
+            border: 1px solid var(--primary); color: #fff; border-radius: 6px; text-align: center;
+        }
+        .btn-grade {
+            padding: 4px 10px; background: var(--primary); border: none; color: #000;
+            font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 0.75rem;
+        }
+        .btn-kick {
+            background: var(--accent-red); color: #fff; border: none; padding: 3px 6px;
+            border-radius: 4px; cursor: pointer; font-size: 0.7rem; font-weight: bold;
+        }
+
+        /* MODALES DE TRABAJO Y ETIQUETADO */
         .modal {
-            display: none; position: fixed; z-index: 300; left: 0; top: 0;
+            display: none; position: fixed; z-index: 500; left: 0; top: 0;
             width: 100%; height: 100%; background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(8px); justify-content: center; align-items: center;
-            padding: 15px;
+            backdrop-filter: blur(6px); justify-content: center; align-items: center; padding: 15px;
         }
         .modal-content {
-            background: #0d1710; border: 1.5px solid var(--accent); color: #fff;
-            padding: 25px; border-radius: 20px; max-width: 750px; width: 100%;
-            max-height: 90vh; overflow-y: auto; position: relative;
-            box-shadow: 0 25px 60px rgba(0,0,0,0.95), 0 0 25px rgba(255, 143, 0, 0.2);
+            background: var(--panel-bg); border: 2px solid var(--accent-yellow);
+            box-shadow: var(--neon-yellow-glow); color: #fff; padding: 22px;
+            border-radius: 16px; max-width: 620px; width: 100%; max-height: 90vh;
+            overflow-y: auto; position: relative;
         }
         .close-btn {
-            position: absolute; top: 15px; right: 20px; font-size: 1.8rem;
-            color: #aaa; cursor: pointer; border: none; background: none; transition: 0.2s;
+            position: absolute; top: 12px; right: 16px; font-size: 1.5rem;
+            color: #aaa; cursor: pointer; border: none; background: none;
         }
-        .close-btn:hover { color: #fff; transform: scale(1.1); }
+        .modal h3, .modal h2 { color: var(--accent-yellow); margin-bottom: 12px; font-size: 1.15rem; }
+        
+        .orienting-questions {
+            background: rgba(255, 215, 0, 0.08); border: 1px solid var(--accent-yellow);
+            padding: 12px; border-radius: 10px; font-size: 0.82rem; margin-bottom: 15px;
+            display: flex; flex-direction: column; gap: 6px;
+        }
+        .orienting-questions strong { color: var(--accent-yellow); }
 
-        .guided-questions-box {
-            background: rgba(27, 94, 32, 0.25);
-            border-left: 4px solid var(--neon-green);
-            padding: 14px 18px;
-            border-radius: 10px;
-            margin-bottom: 20px;
+        textarea {
+            width: 100%; padding: 10px; border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.6);
+            color: #fff; font-size: 0.9rem; resize: vertical; outline: none;
         }
-        .guided-questions-box h4 {
-            margin: 0 0 8px 0;
-            color: var(--neon-green);
-            font-size: 0.95rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .guided-questions-box ul {
-            margin: 0;
-            padding-left: 20px;
-            font-size: 0.85rem;
-            color: #c8e6c9;
-            line-height: 1.5;
+        textarea:focus { border-color: var(--accent-yellow); box-shadow: var(--neon-yellow-glow); }
+
+        .line-counter {
+            font-size: 0.75rem; color: #aaa; text-align: right; margin-top: 4px;
         }
 
-        .section-title {
-            color: var(--gold); border-bottom: 1px solid rgba(255,255,255,0.15);
-            padding-bottom: 6px; margin-top: 22px; font-size: 1rem; font-weight: bold;
-            display: flex; align-items: center; gap: 8px;
-        }
-        label { display: block; margin: 10px 0 5px; font-size: 0.88rem; color: #a5d6a7; font-weight: 600; }
-        textarea, input[type="text"], input[type="number"] {
-            width: 100%; padding: 10px 12px; border-radius: 8px;
-            border: 1px solid var(--glass-border); background: rgba(0,0,0,0.5);
-            color: #fff; font-size: 0.9rem; margin-bottom: 6px; outline: none; transition: 0.3s;
-        }
-        textarea:focus, input[type="text"]:focus { border-color: var(--accent); box-shadow: 0 0 8px var(--accent-glow); }
-
-        /* CONTADOR DE LÍNEAS / CARACTERES */
-        .text-counter-info {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.78rem;
-            color: #81c784;
-            margin-bottom: 12px;
-        }
-
-        /* TABLA MATEMÁTICA */
-        .eco-table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.85rem; }
-        .eco-table th, .eco-table td {
-            border: 1px solid var(--glass-border); padding: 8px; text-align: left;
-        }
-        .eco-table th { background: rgba(27, 94, 32, 0.4); color: var(--gold); }
-        .eco-table input, .eco-table select {
-            width: 100%; background: transparent; border: none; color: #fff; padding: 4px; outline: none;
-        }
-        .eco-table select option { background: #0d1710; color: #fff; }
-
-        /* GRABADOR DE AUDIO */
-        .audio-recorder {
-            display: flex; align-items: center; gap: 12px; margin: 12px 0;
-            background: rgba(0,0,0,0.4); padding: 12px; border-radius: 10px;
-            border: 1px solid var(--glass-border);
-        }
-        .btn-rec {
-            background: linear-gradient(135deg, #d32f2f, #f44336); color: white; border: none; padding: 8px 16px;
-            border-radius: 20px; cursor: pointer; font-size: 0.85rem; font-weight: bold; transition: 0.2s;
-        }
-        .btn-rec:hover { transform: scale(1.05); }
-
-        /* PANEL DEL DOCENTE SIDEBAR (LATERAL DERECHO SINO OBSTRUIR LA IMAGEN) */
-        .teacher-sidebar {
-            width: 420px;
-            height: 100%;
-            background: rgba(10, 18, 12, 0.96);
-            border-left: 2px solid var(--accent);
-            box-shadow: -10px 0 30px rgba(0,0,0,0.8);
-            display: none;
-            flex-direction: column;
-            padding: 18px;
-            overflow-y: auto;
-            z-index: 100;
-            backdrop-filter: blur(10px);
-        }
-
-        .teacher-sidebar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid rgba(255,255,255,0.15);
-            padding-bottom: 12px;
-            margin-bottom: 15px;
-        }
-
-        .teacher-sidebar-header h3 {
-            color: var(--neon-green);
-            margin: 0;
-            font-size: 1.15rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .student-card {
-            background: linear-gradient(145deg, rgba(20, 35, 24, 0.9), rgba(12, 22, 15, 0.9));
-            border: 1px solid rgba(129, 199, 132, 0.3);
-            border-radius: 12px;
-            padding: 14px;
-            margin-bottom: 14px;
-            box-shadow: var(--card-glow);
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .student-card:hover {
-            border-color: var(--accent);
-            transform: translateY(-2px);
-        }
-
-        .student-card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-
-        .student-name {
-            font-weight: bold;
-            color: #fff;
-            font-size: 0.95rem;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .tag-room {
-            background: var(--accent);
-            color: #000;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-weight: bold;
-            font-size: 0.72rem;
-        }
-
-        .status-badge {
-            font-size: 0.75rem;
-            padding: 3px 8px;
-            border-radius: 6px;
-            font-weight: bold;
-        }
-        .status-complete { background: rgba(0, 255, 136, 0.2); color: var(--neon-green); border: 1px solid var(--neon-green); }
-        .status-writing { background: rgba(255, 215, 0, 0.2); color: var(--gold); border: 1px solid var(--gold); }
-
-        .btn-kick {
-            background: #c62828; color: #fff; border: none; padding: 4px 8px;
-            border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight: bold;
-            transition: 0.2s;
-        }
-        .btn-kick:hover { background: #b71c1c; }
-
-        .essay-preview-box {
-            background: rgba(0,0,0,0.6);
-            padding: 10px 12px;
-            border-radius: 8px;
-            border-left: 3px solid var(--gold);
-            font-size: 0.83rem;
-            color: #e0e0e0;
-            margin: 8px 0;
-            line-height: 1.4;
-            max-height: 120px;
-            overflow-y: auto;
-        }
-
-        .grading-section {
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px dashed rgba(255,255,255,0.15);
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .grading-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .grading-row input[type="number"] {
-            width: 75px;
-            padding: 6px;
-            margin: 0;
-            font-weight: bold;
-            color: var(--neon-green);
-            text-align: center;
-        }
-
-        .btn-grade-save {
-            background: var(--primary-light);
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.8rem;
-            font-weight: bold;
-        }
-
-        .btn-report-gen {
-            width: 100%;
-            background: linear-gradient(135deg, #00897b, #004d40);
-            border: 1px solid #4db6ac;
-            color: #fff;
-            padding: 10px;
-            border-radius: 10px;
-            font-weight: bold;
-            font-size: 0.9rem;
-            cursor: pointer;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            box-shadow: 0 4px 12px rgba(0, 137, 123, 0.4);
-            transition: 0.3s;
-        }
-        .btn-report-gen:hover { background: linear-gradient(135deg, #009688, #00695c); }
-
-        /* VISTA IMPRESIÓN REPORTE DOCENTE */
-        @media print {
-            body { background: #fff !important; color: #000 !important; }
-            .instruction-header, .scene-container, .teacher-sidebar, .modal { display: none !important; }
-            #printableReport { display: block !important; padding: 20px; color: #000; }
-        }
-        #printableReport { display: none; }
-
-        /* RESPONSIVO */
-        @media (max-width: 900px) {
-            .main-workspace { flex-direction: column; }
-            .teacher-sidebar { width: 100%; height: 50vh; }
-            .instruction-header h1 { font-size: 0.85rem; }
-            .profe-badge-title { font-size: 1.1rem; }
+        /* RESPONSIVO MÓVIL */
+        @media (max-width: 768px) {
+            .teacher-sidebar {
+                position: fixed; right: 0; top: 48px; width: 100%; height: calc(100vh - 48px);
+            }
+            .consigna-text { max-width: 50vw; font-size: 0.75rem; }
         }
     </style>
 </head>
 <body>
 
-    <!-- 1. ENCABEZADO E INSTRUCCIÓN PRINCIPAL DE LA ACTIVIDAD -->
-    <header class="instruction-header">
-        <h1>
-            <span>📌 Consigna:</span> Observa detalladamente la imagen y luego redacta una descripción estructurada y coherente sobre un objeto, organismo o fenómeno natural.
-        </h1>
-        <div style="display:flex; align-items:center; gap:10px;">
-            <div class="top-info" id="topInfo" style="display:none;">
-                👤 <strong id="displayName">-</strong> | 🏫 Sala: <strong id="displayRoom">-</strong>
-            </div>
-            <button class="btn-teacher-toggle" id="btnTeacherToggle" onclick="toggleTeacherPanel()">
-                <i class="fa-solid fa-chalkboard-user"></i> Panel Docente
-            </button>
+    <!-- BARRA SUPERIOR DE CONSIGNA -->
+    <div class="consigna-bar">
+        <div class="consigna-text">
+            📌 <span>CONSIGNA:</span> Observa detalladamente la imagen y luego redacta una descripción estructurada y coherente sobre un objeto, organismo o fenómeno natural.
         </div>
-    </header>
+        <button class="btn-teacher-toggle" id="btnTeacherToggle" onclick="toggleTeacherPanel()">👨‍🏫 Panel Docente</button>
+    </div>
 
-    <!-- 2. REGISTRO DE USUARIO / LOGIN -->
+    <!-- PANTALLA DE ACCESO Y ELECCIÓN DE SALA -->
     <div id="loginOverlay">
         <div class="login-card">
             <h2>🌿 Laboratorio de Biodiversidad</h2>
-            <p>Ingresa tus datos para iniciar la indagación guiada en tiempo real</p>
             <input type="text" id="studentName" placeholder="Tu Nombre Completo">
-            <input type="text" id="studentRoom" placeholder="Nombre de tu Sala / Grupo (ej. Grupo A)">
+            <input type="text" id="studentRoom" placeholder="Código de Sala (ej. GRUPO_A)" style="text-transform: uppercase;">
             <button class="btn-primary" onclick="startSession()">Ingresar a la Experiencia</button>
-            <span class="teacher-link" onclick="openTeacherLogin()">¿Eres el Maestro? Click aquí</span>
+            <span class="teacher-link" onclick="openTeacherLogin()">Acceso Docente</span>
         </div>
     </div>
 
-    <!-- 3. ESPACIO PRINCIPAL: ESCENA 3D + PANEL DOCENTE SIDEBAR -->
-    <div class="main-workspace">
-        <div class="scene-container" id="sceneContainer">
+    <!-- CONTENEDOR PRINCIPAL -->
+    <div class="main-container">
+        
+        <!-- ESCENA INTERACTIVA (IMAGEN Y HOTSPOTS EXTENDIDOS) -->
+        <div class="scene-container">
             <div class="eco-image-wrapper" id="imageWrapper" onclick="handleImageClick(event)">
                 
-                <!-- TÍTULO PROFE DECORATIVO DENTRO DE LA IMAGEN -->
                 <div class="profe-badge-title">
                     PROFE <span>Recursos Educativos</span>
                 </div>
 
                 <img src="eco.jpg" alt="Ecosistema de Biodiversidad">
 
-                <div class="hotspot" style="top: 38%; left: 14%;" onclick="openLabelModal(event, 'Tucán')">📍<span>Tucán</span></div>
-                <div class="hotspot" style="top: 67%; left: 66%;" onclick="openLabelModal(event, 'Jaguar')">📍<span>Jaguar</span></div>
-                <div class="hotspot" style="top: 85%; left: 35%;" onclick="openLabelModal(event, 'Río')">📍<span>Río</span></div>
-                <div class="hotspot" style="top: 25%; left: 75%;" onclick="openLabelModal(event, 'Árbol')">📍<span>Árbol</span></div>
-                <div class="hotspot" style="top: 72%; left: 45%;" onclick="openLabelModal(event, 'Víbora')">📍<span>Víbora</span></div>
-                <div class="hotspot" style="top: 50%; left: 28%;" onclick="openLabelModal(event, 'Insectos')">📍<span>Insectos</span></div>
+                <!-- PUNTOS DE OBSERVACIÓN Y DESCRIPCIÓN (HOTSPOTS MULTICOLOR) -->
+                <div class="hotspot hs-green" style="top: 38%; left: 14%;" onclick="openLabelModal(event, 'Tucán')">📍<span>Tucán</span></div>
+                <div class="hotspot hs-yellow" style="top: 67%; left: 66%;" onclick="openLabelModal(event, 'Jaguar')">📍<span>Jaguar</span></div>
+                <div class="hotspot hs-red" style="top: 85%; left: 35%;" onclick="openLabelModal(event, 'Río')">📍<span>Río</span></div>
+                <div class="hotspot hs-green" style="top: 25%; left: 75%;" onclick="openLabelModal(event, 'Árbol')">📍<span>Árbol</span></div>
+                <div class="hotspot hs-yellow" style="top: 72%; left: 45%;" onclick="openLabelModal(event, 'Víbora')">📍<span>Víbora</span></div>
+                <div class="hotspot hs-red" style="top: 50%; left: 28%;" onclick="openLabelModal(event, 'Insectos')">📍<span>Insectos</span></div>
+                <div class="hotspot hs-green" style="top: 89%; left: 24%;" onclick="openLabelModal(event, 'Peces')">📍<span>Peces</span></div>
+                <div class="hotspot hs-yellow" style="top: 64%; left: 39%;" onclick="openLabelModal(event, 'Capibara')">📍<span>Capibara</span></div>
+                <div class="hotspot hs-red" style="top: 28%; left: 52%;" onclick="openLabelModal(event, 'Montaña')">📍<span>Montaña / Nieve</span></div>
             </div>
         </div>
 
-        <!-- 4. PANEL DEL DOCENTE A LA DERECHA SIN TAPAR LA IMAGEN -->
-        <aside class="teacher-sidebar" id="teacherPanel">
-            <div class="teacher-sidebar-header">
-                <h3><i class="fa-solid fa-users-viewfinder"></i> Monitor Docente</h3>
-                <button onclick="closeTeacherPanel()" style="background:none; border:none; color:#aaa; cursor:pointer; font-size:1.2rem;">✖</button>
+        <!-- PANEL LATERAL DERECHO DEL DOCENTE -->
+        <div class="teacher-sidebar" id="teacherSidebar">
+            <div class="sidebar-header">
+                <h3>👨‍🏫 Panel Docente en Vivo</h3>
+                <button onclick="toggleTeacherPanel()" style="background:none; border:none; color:#fff; cursor:pointer; font-size:1.2rem;">✖</button>
             </div>
-
-            <button class="btn-report-gen" onclick="generateTeacherReport()">
-                <i class="fa-solid fa-file-pdf"></i> Generar Reporte Completo
-            </button>
-
-            <div style="margin-bottom: 15px;">
-                <label style="margin-top:0;">Filtrar por Sala/Grupo:</label>
-                <input type="text" id="filterRoom" placeholder="Escribe el nombre de la sala..." oninput="renderTeacherData()">
+            <div style="font-size: 0.8rem; color: var(--primary);">
+                🏫 Sala Activa: <strong id="lblActiveRoom">-</strong>
             </div>
-
-            <div id="responsesContainer">
-                <!-- Se llenará dinámicamente con cards independientes para cada estudiante -->
+            <div class="filter-box">
+                <input type="text" id="filterStudent" placeholder="Filtrar por nombre de participante..." oninput="renderTeacherData()">
             </div>
-        </aside>
+            <button class="btn-primary" style="padding: 8px; font-size: 0.85rem;" onclick="generateFullReport()">📄 Generar Reporte de Redacciones</button>
+            
+            <div id="responsesContainer" style="display:flex; flex-direction:column; gap:10px;"></div>
+        </div>
     </div>
 
-    <!-- 5. MODAL ETIQUETA DE MARCA (HOTSPOT) -->
+    <!-- MODAL DE ETIQUETADO DE ELEMENTOS -->
     <div class="modal" id="labelModal">
         <div class="modal-content" style="max-width: 400px;">
-            <button class="close-btn" onclick="closeLabelModal()">&times;</button>
-            <h3 style="color: var(--neon-green); margin-top:0;" id="labelTargetTitle">Identificar Elemento</h3>
-            <p style="font-size: 0.85rem; color:#cfd8dc;">Escribe el nombre o descripción de la especie/elemento señalado:</p>
-            <input type="text" id="labelInput" placeholder="Ej. Tucán de Pico Verde">
+            <button class="close-btn" onclick="closeModal('labelModal')">&times;</button>
+            <h3 id="labelTargetTitle">Observar Elemento</h3>
+            <p style="font-size: 0.85rem; color:#ccc; margin-bottom:8px;">Identifica o describe brevemente el elemento seleccionado:</p>
+            <input type="text" id="labelInput" placeholder="Ej. Tucán de Pico Verde en el dosel">
             <button class="btn-primary" onclick="saveElementLabel()">Guardar Identificación</button>
         </div>
     </div>
 
-    <!-- 6. MODAL GUÍA COMPLETA DE ACTIVIDAD Y REDACCIÓN -->
+    <!-- MODAL DE REDACCIÓN COMPLETA DE 5 A 8 LÍNEAS CON PREGUNTAS GUÍA -->
     <div class="modal" id="activityModal">
         <div class="modal-content">
-            <button class="close-btn" onclick="closeActivityModal()">&times;</button>
-            <h2 style="color: var(--neon-green); margin-top:0; display:flex; align-items:center; gap:10px;">
-                <i class="fa-solid fa-pen-nib"></i> Guía de Trabajo e Indagación
-            </h2>
-
-            <!-- CUADRO DE PREGUNTAS GUÍA PARA LA OBSERVACIÓN -->
-            <div class="guided-questions-box">
-                <h4><i class="fa-solid fa-compass"></i> Preguntas Guía para Orientar tu Análisis:</h4>
-                <ul>
-                    <li>¿Qué representa la imagen?</li>
-                    <li>¿Qué elementos bióticos (vivos) y abióticos (no vivos) se logran identificar?</li>
-                    <li>¿De qué manera interactúan o se relacionan los elementos que conforman este sistema?</li>
-                    <li>¿Qué ocurriría si uno de estos componentes fuera alterado o desapareciera?</li>
-                </ul>
+            <button class="close-btn" onclick="closeModal('activityModal')">&times;</button>
+            <h2>✍️ Redacción Descriptivo-Explicativa</h2>
+            
+            <!-- PREGUNTAS GUÍA DE ANÁLISIS -->
+            <div class="orienting-questions">
+                <strong>Preguntas orientadoras para guiar tu análisis:</strong>
+                <div>• ¿Qué representa la imagen?</div>
+                <div>• ¿Qué elementos bióticos (vivos) y abióticos (no vivos) logras identificar?</div>
+                <div>• ¿De qué manera interactúan o se relacionan los elementos que conforman este sistema?</div>
+                <div>• ¿Qué ocurriría si uno de estos componentes fuera alterado o desapareciera?</div>
             </div>
 
-            <form id="ecoForm" onsubmit="submitAnswers(event)">
-                
-                <!-- REDACCIÓN OBLIGATORIA DE 5 A 8 LÍNEAS -->
-                <div class="section-title"><i class="fa-solid fa-align-left"></i> ESCRITO DESCRIPTIVO-EXPLICATIVO (OBLIGATORIO)</div>
-                <label for="escritura1">A partir de las preguntas guía, redacta un texto descriptivo-explicativo con orden lógico, claridad y terminología adecuada (Extensión requerida: 5 a 8 líneas):</label>
-                <textarea id="escritura1" rows="7" required placeholder="Escribe aquí tu texto descriptivo detallado..." oninput="updateCounter()"></textarea>
-                <div class="text-counter-info">
-                    <span id="lineCounter">Líneas aprox: 0 / 5 a 8 líneas</span>
-                    <span id="charCounter">Caracteres: 0</span>
-                </div>
+            <label style="display:block; font-size:0.85rem; margin-bottom:6px; color:#ddd;">
+                Redacta un texto de <strong>5 a 8 líneas</strong> caracterizado por su orden lógico, claridad y terminología adecuada:
+            </label>
+            
+            <textarea id="essayInput" rows="7" placeholder="Escribe tu redacción aquí..." oninput="updateLineCount()"></textarea>
+            <div class="line-counter" id="lineCounter">Líneas estimadas: 0 / 5-8</div>
 
-                <div class="section-title"><i class="fa-solid fa-book-open"></i> LECTURA Y ANÁLISIS</div>
-                <label>1. ¿Qué información te brinda la imagen sobre el ecosistema?</label>
-                <textarea id="lectura1" rows="2" required></textarea>
-                
-                <label>2. ¿Qué puedes inferir sobre la importancia del agua, luz o suelo?</label>
-                <textarea id="lectura2" rows="2" required></textarea>
-
-                <label>3. Propuesta de acciones para cuidar este ecosistema:</label>
-                <textarea id="escritura2" rows="2" required></textarea>
-
-                <div class="section-title"><i class="fa-solid fa-calculator"></i> PENSAMIENTO LÓGICO MATEMÁTICO</div>
-                <label>Clasificación de Seres Vivos Observados:</label>
-                <table class="eco-table" id="mathTable">
-                    <thead>
-                        <tr>
-                            <th>Ser Vivo</th>
-                            <th>Clasificación</th>
-                            <th>Cantidad</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><input type="text" placeholder="Ej. Jaguar" class="tv-name"></td>
-                            <td>
-                                <select class="tv-class">
-                                    <option value="Productor">Productor</option>
-                                    <option value="Consumidor">Consumidor</option>
-                                    <option value="Descomponedor">Descomponedor</option>
-                                </select>
-                            </td>
-                            <td><input type="number" placeholder="1" class="tv-count"></td>
-                        </tr>
-                    </tbody>
-                </table>
-                <button type="button" onclick="addTableRow()" style="background:#2e7d32; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:bold;">+ Agregar Fila</button>
-
-                <label style="margin-top:14px;">2. Si este ecosistema desapareciera en un 50% de plantas, ¿qué efectos podrían ocurrir? Justifica:</label>
-                <textarea id="math2" rows="2" required></textarea>
-
-                <div class="section-title"><i class="fa-solid fa-vial"></i> INDAGACIÓN CIENTÍFICA</div>
-                <label>1. ¿Qué pasa si disminuye la temperatura o la luz solar?</label>
-                <textarea id="indagacion1" rows="2" required></textarea>
-
-                <label>2. ¿Qué evidencia de la vida te permite afirmar que existe un ciclo de consumidores?</label>
-                <textarea id="indagacion2" rows="2" required></textarea>
-
-                <div class="section-title"><i class="fa-solid fa-microphone"></i> COMUNICACIÓN ORAL</div>
-                <label>Graba un audio expresando tu comentario sobre acciones de protección ambiental:</label>
-                <div class="audio-recorder">
-                    <button type="button" class="btn-rec" id="recBtn" onclick="toggleRecording()">🔴 Grabar Audio</button>
-                    <span id="recStatus" style="font-size: 0.85rem;">Listo para grabar</span>
-                    <audio id="audioPreview" controls style="display:none; height:32px;"></audio>
-                </div>
-
-                <button type="submit" class="btn-primary" style="margin-top: 20px; font-size:1.05rem;">🚀 Enviar Trabajo Completo al Docente</button>
-            </form>
+            <button class="btn-primary" style="margin-top:15px;" onclick="submitEssay()">🚀 Enviar Redacción al Docente</button>
         </div>
     </div>
 
-    <!-- 7. REPORTE IMPRIMIBLE COMPLETO PARA EL DOCENTE -->
-    <div id="printableReport"></div>
-
     <script>
-        // CONFIGURACIÓN DE FIREBASE
+        // CONFIGURACIÓN DE FIREBASE REALTIME DATABASE
         const firebaseConfig = {
             apiKey: "AIzaSyCFbiJQ21ly52KCIFms6i6KTPP1EwcQTDs",
             authDomain: "dde-lapaz.firebaseapp.com",
@@ -687,8 +354,7 @@
             projectId: "dde-lapaz",
             storageBucket: "dde-lapaz.firebasestorage.app",
             messagingSenderId: "665712008298",
-            appId: "1:665712008298:web:6a8680b1b4117422047e13",
-            measurementId: "G-55GY7W40C8"
+            appId: "1:665712008298:web:6a8680b1b4117422047e13"
         };
 
         firebase.initializeApp(firebaseConfig);
@@ -696,72 +362,59 @@
 
         let currentUser = { name: '', room: '', studentId: '' };
         let studentLabels = {};
-        let allResponses = {};
         let activeTargetKey = '';
-        let mediaRecorder, audioChunks = [], audioBase64 = '';
+        let allResponses = {};
         let isTeacherAuthenticated = false;
 
         function startSession() {
             const name = document.getElementById('studentName').value.trim();
-            const room = document.getElementById('studentRoom').value.trim();
+            const room = document.getElementById('studentRoom').value.trim().toUpperCase();
             if (!name || !room) {
-                alert('Por favor ingresa tu nombre y tu sala para continuar.');
+                alert('Por favor ingresa tu nombre y el código de sala.');
                 return;
             }
-            const cleanId = (name + '_' + room).replace(/[^a-zA-Z0-9]/g, "_");
+            const cleanId = name.replace(/[^a-zA-Z0-9]/g, "_");
             currentUser = { name, room, studentId: cleanId };
-            
-            document.getElementById('displayName').innerText = name;
-            document.getElementById('displayRoom').innerText = room;
-            document.getElementById('loginOverlay').style.display = 'none';
-            document.getElementById('topInfo').style.display = 'block';
 
-            // Iniciar registro inicial en Firebase para que el docente lo vea "En redacción"
-            db.ref('respuestas/' + currentUser.studentId).update({
-                student: currentUser.name,
-                room: currentUser.room,
-                status: 'writing',
-                timestamp: Date.now()
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('lblActiveRoom').innerText = room;
+
+            // Escuchar cambios de estado personales
+            db.ref(`salas_biodiversidad/${room}/participantes/${cleanId}`).on('value', snapshot => {
+                const val = snapshot.val();
+                if (val && val.elementLabels) studentLabels = val.elementLabels;
             });
         }
 
         function openTeacherLogin() {
-            const pass = prompt('Ingresa la contraseña de acceso docente:');
+            const pass = prompt('Ingresa la contraseña docente:');
             if (pass === 'mejia') {
+                const room = prompt('Ingresa el Código de la Sala a moderar (ej. GRUPO_A):', 'GRUPO_A');
+                if(!room) return;
+
                 isTeacherAuthenticated = true;
+                currentUser.room = room.trim().toUpperCase();
+                document.getElementById('lblActiveRoom').innerText = currentUser.room;
+                
                 document.getElementById('loginOverlay').style.display = 'none';
-                document.getElementById('teacherPanel').style.display = 'flex';
                 document.getElementById('btnTeacherToggle').style.display = 'block';
-                listenToResponses();
+                document.getElementById('teacherSidebar').classList.add('active');
+                
+                listenToRoomData();
             } else {
                 alert('Contraseña incorrecta');
             }
         }
 
         function toggleTeacherPanel() {
-            if(!isTeacherAuthenticated) return;
-            const panel = document.getElementById('teacherPanel');
-            panel.style.display = (panel.style.display === 'flex') ? 'none' : 'flex';
-        }
-
-        function closeTeacherPanel() {
-            document.getElementById('teacherPanel').style.display = 'none';
-        }
-
-        function kickStudent(studentId, name) {
-            if (confirm(`¿Estás seguro de que deseas expulsar a "${name}"? Se borrarán sus datos.`)) {
-                db.ref('respuestas/' + studentId).remove()
-                    .then(() => alert(`El participante ${name} ha sido eliminado.`))
-                    .catch(err => alert("Error: " + err.message));
-            }
+            if (!isTeacherAuthenticated) return;
+            document.getElementById('teacherSidebar').classList.toggle('active');
         }
 
         function handleImageClick(e) {
-            if (e.target.classList.contains('hotspot') || e.target.parentElement.classList.contains('hotspot')) {
-                return;
-            }
-            if(!currentUser.name) {
-                alert('Ingresa tu nombre primero.');
+            if (e.target.classList.contains('hotspot') || e.target.parentElement.classList.contains('hotspot')) return;
+            if (!currentUser.name) {
+                alert('Ingresa primero tus datos de acceso.');
                 return;
             }
             document.getElementById('activityModal').style.display = 'flex';
@@ -769,168 +422,66 @@
 
         function openLabelModal(e, key) {
             e.stopPropagation();
-            if(!currentUser.name) {
-                alert('Ingresa tu nombre primero.');
+            if (!currentUser.name) {
+                alert('Ingresa primero tus datos de acceso.');
                 return;
             }
             activeTargetKey = key;
-            document.getElementById('labelTargetTitle').innerText = 'Identificar: ' + key;
+            document.getElementById('labelTargetTitle').innerText = 'Observar: ' + key;
             document.getElementById('labelInput').value = studentLabels[key] || '';
             document.getElementById('labelModal').style.display = 'flex';
         }
 
-        function closeLabelModal() {
-            document.getElementById('labelModal').style.display = 'none';
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
         }
 
         function saveElementLabel() {
             const val = document.getElementById('labelInput').value.trim();
-            if(val) {
+            if (val) {
                 studentLabels[activeTargetKey] = val;
-                
-                db.ref('respuestas/' + currentUser.studentId).update({
+                db.ref(`salas_biodiversidad/${currentUser.room}/participantes/${currentUser.studentId}`).update({
                     student: currentUser.name,
-                    room: currentUser.room,
                     timestamp: Date.now(),
                     elementLabels: studentLabels
                 });
             }
-            closeLabelModal();
+            closeModal('labelModal');
         }
 
-        function closeActivityModal() {
-            document.getElementById('activityModal').style.display = 'none';
+        function updateLineCount() {
+            const text = document.getElementById('essayInput').value;
+            const lines = text.split('\n').filter(l => l.trim() !== '').length || (text ? 1 : 0);
+            const counter = document.getElementById('lineCounter');
+            counter.innerText = `Líneas estimadas: ${lines} / 5-8`;
+            counter.style.color = (lines >= 5 && lines <= 8) ? '#00ff88' : '#aaa';
         }
 
-        function updateCounter() {
-            const text = document.getElementById('escritura1').value;
-            const chars = text.length;
-            // Estimación de líneas basada en saltos de línea y longitud media de renglón (~65 caracteres)
-            const lines = text.split('\n').reduce((acc, line) => acc + Math.max(1, Math.ceil(line.length / 65)), 0);
-            
-            document.getElementById('lineCounter').innerText = `Líneas aprox: ${lines} / 5 a 8 líneas`;
-            document.getElementById('charCounter').innerText = `Caracteres: ${chars}`;
-
-            if(lines >= 5 && lines <= 8) {
-                document.getElementById('lineCounter').style.color = '#00ff88';
-            } else {
-                document.getElementById('lineCounter').style.color = '#ffd700';
+        function submitEssay() {
+            const text = document.getElementById('essayInput').value.trim();
+            if (!text) {
+                alert('Por favor redacta tu escrito antes de enviar.');
+                return;
             }
-        }
 
-        function addTableRow() {
-            const tbody = document.querySelector('#mathTable tbody');
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td><input type="text" placeholder="Ej. Planta" class="tv-name"></td>
-                <td>
-                    <select class="tv-class">
-                        <option value="Productor">Productor</option>
-                        <option value="Consumidor">Consumidor</option>
-                        <option value="Descomponedor">Descomponedor</option>
-                    </select>
-                </td>
-                <td><input type="number" placeholder="1" class="tv-count"></td>
-            `;
-            tbody.appendChild(row);
-        }
-
-        async function toggleRecording() {
-            const btn = document.getElementById('recBtn');
-            const status = document.getElementById('recStatus');
-
-            if (!mediaRecorder || mediaRecorder.state === 'inactive') {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    mediaRecorder = new MediaRecorder(stream);
-                    audioChunks = [];
-
-                    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-                    mediaRecorder.onstop = () => {
-                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                        const reader = new FileReader();
-                        reader.readAsDataURL(audioBlob);
-                        reader.onloadend = () => {
-                            audioBase64 = reader.result;
-                            const audioPreview = document.getElementById('audioPreview');
-                            audioPreview.src = audioBase64;
-                            audioPreview.style.display = 'block';
-                        };
-                    };
-
-                    mediaRecorder.start();
-                    btn.innerText = '⏹️ Detener';
-                    status.innerText = 'Grabando...';
-                } catch(e) {
-                    alert('Permiso de micrófono denegado o no disponible.');
-                }
-            } else {
-                mediaRecorder.stop();
-                btn.innerText = '🔴 Volver a Grabar';
-                status.innerText = 'Audio Listo';
-            }
-        }
-
-        function submitAnswers(e) {
-            e.preventDefault();
-
-            const tableRows = document.querySelectorAll('#mathTable tbody tr');
-            const tableData = [];
-            tableRows.forEach(row => {
-                const name = row.querySelector('.tv-name').value;
-                const type = row.querySelector('.tv-class').value;
-                const count = row.querySelector('.tv-count').value;
-                if(name) tableData.push({ name, type, count });
-            });
-
-            const payload = {
+            db.ref(`salas_biodiversidad/${currentUser.room}/participantes/${currentUser.studentId}`).update({
                 student: currentUser.name,
-                room: currentUser.room,
-                timestamp: Date.now(),
-                status: 'submitted',
-                elementLabels: studentLabels,
-                lectura: {
-                    q1: document.getElementById('lectura1').value,
-                    q2: document.getElementById('lectura2').value
-                },
-                escritura: {
-                    q1: document.getElementById('escritura1').value,
-                    q2: document.getElementById('escritura2').value
-                },
-                matematica: {
-                    tabla: tableData,
-                    q2: document.getElementById('math2').value
-                },
-                indagacion: {
-                    q1: document.getElementById('indagacion1').value,
-                    q2: document.getElementById('indagacion2').value
-                },
-                audio: audioBase64
-            };
-
-            db.ref('respuestas/' + currentUser.studentId).update(payload, (err) => {
-                if(!err) {
-                    alert('¡Excelente! Tu trabajo y escrito descriptivo han sido enviadas al maestro.');
-                    closeActivityModal();
+                redaccion: text,
+                status: 'Entregado',
+                timestamp: Date.now()
+            }, (err) => {
+                if (!err) {
+                    alert('¡Redacción enviada correctamente al docente!');
+                    closeModal('activityModal');
                 } else {
-                    alert('Error al enviar respuestas.');
+                    alert('Error al enviar la redacción.');
                 }
             });
         }
 
-        function saveGrade(studentId) {
-            const score = document.getElementById(`score_${studentId}`).value;
-            const feedback = document.getElementById(`feedback_${studentId}`).value;
-
-            db.ref(`respuestas/${studentId}/calificacion`).set({
-                score: score,
-                feedback: feedback,
-                gradedAt: Date.now()
-            }).then(() => alert('Calificación y retroalimentación guardadas.'));
-        }
-
-        function listenToResponses() {
-            db.ref('respuestas').on('value', snapshot => {
+        // ESCUCHA EN TIEMPO REAL RESTRINGIDA A LA SALA ACTIVA
+        function listenToRoomData() {
+            db.ref(`salas_biodiversidad/${currentUser.room}/participantes`).on('value', snapshot => {
                 allResponses = snapshot.val() || {};
                 renderTeacherData();
             });
@@ -938,116 +489,126 @@
 
         function renderTeacherData() {
             const container = document.getElementById('responsesContainer');
-            const filter = document.getElementById('filterRoom').value.toLowerCase();
+            const filter = document.getElementById('filterStudent').value.toLowerCase();
             container.innerHTML = '';
 
+            const borderColors = ['border-green', 'border-yellow', 'border-red'];
+            let idx = 0;
+
             Object.entries(allResponses).forEach(([id, resp]) => {
-                if (filter && !resp.room.toLowerCase().includes(filter)) return;
+                if (filter && !resp.student.toLowerCase().includes(filter)) return;
 
-                const isSubmitted = resp.status === 'submitted' || (resp.escritura && resp.escritura.q1);
-                const statusBadge = isSubmitted 
-                    ? `<span class="status-badge status-complete"><i class="fa-solid fa-check"></i> Enviado</span>`
-                    : `<span class="status-badge status-writing"><i class="fa-solid fa-spinner fa-spin"></i> En proceso...</span>`;
+                const colorClass = borderColors[idx % 3];
+                idx++;
 
-                const essayText = (resp.escritura && resp.escritura.q1) 
-                    ? resp.escritura.q1 
-                    : '<em style="color:#aaa;">[El estudiante aún no ha redactado su texto descriptivo]</em>';
+                const isSubmitted = resp.status === 'Entregado';
+                const statusHtml = isSubmitted 
+                    ? `<span class="status-pill status-submitted">Entregado</span>`
+                    : `<span class="status-pill status-pending">En proceso...</span>`;
 
-                const gradeScore = (resp.calificacion && resp.calificacion.score) ? resp.calificacion.score : '';
-                const gradeFeedback = (resp.calificacion && resp.calificacion.feedback) ? resp.calificacion.feedback : '';
+                const textHtml = resp.redaccion 
+                    ? resp.redaccion 
+                    : `<em>[El participante aún no ha redactado su texto descriptivo]</em>`;
+
+                let labelsHtml = '<ul>';
+                if (resp.elementLabels) {
+                    Object.entries(resp.elementLabels).forEach(([k, v]) => {
+                        labelsHtml += `<li><strong>${k}:</strong> ${v}</li>`;
+                    });
+                } else {
+                    labelsHtml += '<li><em>Sin elementos identificados</em></li>';
+                }
+                labelsHtml += '</ul>';
 
                 const card = document.createElement('div');
-                card.className = 'student-card';
+                card.className = `student-card ${colorClass}`;
                 card.innerHTML = `
-                    <div class="student-card-header">
-                        <div class="student-name">
-                            👤 ${resp.student}
-                            <span class="tag-room">${resp.room}</span>
+                    <div class="card-head">
+                        <span class="student-name">👤 ${resp.student}</span>
+                        <div style="display:flex; gap:6px; align-items:center;">
+                            ${statusHtml}
+                            <button class="btn-kick" onclick="kickStudent('${id}', '${resp.student}')">🗑️</button>
                         </div>
-                        <button class="btn-kick" onclick="kickStudent('${id}', '${resp.student}')" title="Expulsar">🗑️</button>
                     </div>
-                    
-                    <div style="margin: 6px 0;">${statusBadge}</div>
-
-                    <div style="font-size:0.8rem; font-weight:bold; color:var(--gold); margin-top:8px;">
-                        ✍️ Redacción Descriptivo-Explicativa (5-8 líneas):
-                    </div>
-                    <div class="essay-preview-box">${essayText}</div>
-
-                    <div class="grading-section">
-                        <div class="grading-row">
-                            <label style="margin:0; font-size:0.8rem; color:#fff;">Nota (100 pts):</label>
-                            <input type="number" id="score_${id}" min="0" max="100" value="${gradeScore}" placeholder="100">
-                            <button class="btn-grade-save" onclick="saveGrade('${id}')">Calificar</button>
+                    <div class="card-body">
+                        <div style="color:var(--accent-yellow); font-size:0.75rem;"><strong>Observaciones puntuales:</strong> ${labelsHtml}</div>
+                        <div><strong>Redacción Descriptiva (5-8 líneas):</strong></div>
+                        <div class="redaccion-preview">${textHtml}</div>
+                        <div class="grade-row">
+                            <span>Nota (100 pts):</span>
+                            <input type="number" class="grade-input" id="grade_${id}" value="${resp.nota || ''}" placeholder="0">
+                            <button class="btn-grade" onclick="saveGrade('${id}')">Calificar</button>
                         </div>
-                        <input type="text" id="feedback_${id}" placeholder="Retroalimentación para el estudiante..." value="${gradeFeedback}" style="margin:0; font-size:0.8rem;">
                     </div>
                 `;
                 container.appendChild(card);
             });
         }
 
-        function generateTeacherReport() {
-            const printDiv = document.getElementById('printableReport');
-            let html = `
-                <div style="font-family: Arial, sans-serif; padding: 20px;">
-                    <h1 style="text-align:center; color:#1b5e20;">REPORTE GENERAL DE REDACCIÓN Y CALIFICACIONES</h1>
-                    <h3 style="text-align:center;">Laboratorio Interactivo de Biodiversidad - PROFE</h3>
-                    <p style="text-align:center;">Fecha: ${new Date().toLocaleDateString()} | Total Participantes: ${Object.keys(allResponses).length}</p>
-                    <hr>
-                    <table border="1" cellpadding="8" cellspacing="0" style="width:100%; border-collapse:collapse; margin-top:20px;">
+        function saveGrade(studentId) {
+            const gradeVal = document.getElementById(`grade_${studentId}`).value;
+            db.ref(`salas_biodiversidad/${currentUser.room}/participantes/${studentId}`).update({
+                nota: gradeVal
+            }, () => alert('Calificación guardada.'));
+        }
+
+        function kickStudent(studentId, name) {
+            if (confirm(`¿Eliminar a "${name}" de esta sala?`)) {
+                db.ref(`salas_biodiversidad/${currentUser.room}/participantes/${studentId}`).remove();
+            }
+        }
+
+        function generateFullReport() {
+            let reportWin = window.open('', '_blank');
+            let content = `
+                <html>
+                <head>
+                    <title>Reporte de Redacción - Sala ${currentUser.room}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; color: #333; }
+                        h2 { color: #1b5e20; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+                        th, td { border: 1px solid #ccc; padding: 10px; text-align: left; font-size: 0.85rem; }
+                        th { background: #e8f5e9; }
+                    </style>
+                </head>
+                <body>
+                    <h2>🌿 Reporte Evaluativo de Biodiversidad</h2>
+                    <p><strong>Sala / Grupo:</strong> ${currentUser.room}</p>
+                    <p><strong>Fecha:</strong> ${new Date().toLocaleDateString()}</p>
+                    <table>
                         <thead>
-                            <tr style="background-color:#f2f2f2;">
-                                <th>Estudiante</th>
-                                <th>Sala</th>
-                                <th>Estado</th>
-                                <th>Escrito Descriptivo</th>
-                                <th>Calificación</th>
-                                <th>Observaciones</th>
+                            <tr>
+                                <th>Participante</th>
+                                <th>Elementos Identificados</th>
+                                <th>Texto Descriptivo-Explicativo</th>
+                                <th>Nota</th>
                             </tr>
                         </thead>
                         <tbody>
             `;
 
-            Object.entries(allResponses).forEach(([id, resp]) => {
-                const isSubmitted = resp.status === 'submitted' || (resp.escritura && resp.escritura.q1);
-                const essay = (resp.escritura && resp.escritura.q1) ? resp.escritura.q1 : 'En blanco / Redactando';
-                const score = (resp.calificacion && resp.calificacion.score) ? resp.calificacion.score + '/100' : 'Sin calificar';
-                const feedback = (resp.calificacion && resp.calificacion.feedback) ? resp.calificacion.feedback : '-';
-
-                html += `
+            Object.values(allResponses).forEach(resp => {
+                let labels = resp.elementLabels ? Object.entries(resp.elementLabels).map(([k,v]) => `${k}: ${v}`).join('; ') : 'Ninguno';
+                content += `
                     <tr>
                         <td><strong>${resp.student}</strong></td>
-                        <td>${resp.room}</td>
-                        <td>${isSubmitted ? 'Completado' : 'Pendiente'}</td>
-                        <td style="font-size:0.85rem;">${essay}</td>
-                        <td style="text-align:center; font-weight:bold;">${score}</td>
-                        <td style="font-size:0.85rem;">${feedback}</td>
+                        <td>${labels}</td>
+                        <td>${resp.redaccion || 'Sin entrega'}</td>
+                        <td><strong>${resp.nota || 'S/N'}</strong></td>
                     </tr>
                 `;
             });
 
-            html += `
+            content += `
                         </tbody>
                     </table>
-                </div>
+                </body>
+                </html>
             `;
-
-            printDiv.innerHTML = html;
-            window.print();
+            reportWin.document.write(content);
+            reportWin.document.close();
         }
-
-        // EFECTO 3D DE INCLINACIÓN EN LA IMAGEN
-        const container = document.getElementById('sceneContainer');
-        const wrapper = document.getElementById('imageWrapper');
-        container.addEventListener('mousemove', (e) => {
-            const xAxis = (window.innerWidth / 2 - e.clientX) / 45;
-            const yAxis = (window.innerHeight / 2 - e.clientY) / 45;
-            wrapper.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
-        });
-        container.addEventListener('mouseleave', () => {
-            wrapper.style.transform = `rotateY(0deg) rotateX(0deg)`;
-        });
     </script>
 </body>
 </html>
