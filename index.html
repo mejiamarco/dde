@@ -55,7 +55,7 @@
         }
         .btn-teacher-toggle:hover { background: var(--primary); color: #000; }
 
-        /* PANTALLA DE ACCESO ESTILO PROGRAMA PROFE (TARJETA CLARA CON MARCO TRICOLOR DE GRADIENTE) */
+        /* PANTALLA DE ACCESO ESTILO PROGRAMA PROFE */
         #loginOverlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(5, 8, 6, 0.95); z-index: 1000;
@@ -282,6 +282,20 @@
             font-size: 0.75rem; color: #aaa; text-align: right; margin-top: 4px;
         }
 
+        /* TABLA DE VISTA PREVIA DEL REPORTE */
+        .report-table {
+            width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 0.85rem;
+        }
+        .report-table th, .report-table td {
+            border: 1px solid rgba(255,255,255,0.2); padding: 10px; text-align: left; vertical-align: top;
+        }
+        .report-table th {
+            background: rgba(0, 255, 136, 0.15); color: var(--primary); font-weight: bold;
+        }
+        .report-table td {
+            background: rgba(0,0,0,0.4); color: #eee;
+        }
+
         /* RESPONSIVO MÓVIL */
         @media (max-width: 768px) {
             .teacher-sidebar {
@@ -355,8 +369,8 @@
                 <div class="hotspot hs-red" style="top: 28%; left: 52%;" onclick="openLabelModal(event, 'Montaña')">📍<span>Montaña / Nieve</span></div>
                 <div class="hotspot hs-red" style="top: 86.5%; left: 91.5%;" onclick="openLabelModal(event, 'Hongos')">📍<span>Hongos</span></div>
                 
-                <!-- PUNTO CORREGIDO EXACTAMENTE SOBRE LA CABEZA DE VENADO DE LA PATA IZQUIERDA -->
-                <div class="hotspot hs-yellow" style="top: 70.5%; left: 30.5%; width: 34px; height: 34px;" onclick="openLabelModal(event, 'Venado')">📍<span>Venado</span></div>
+                <!-- PUNTO CORREGIDO UBICADO EXACTAMENTE SOBRE LA PATA DELANTERA IZQUIERDA (CABEZA DE VENADO DEFECTUOSA) -->
+                <div class="hotspot hs-yellow" style="top: 71.5%; left: 29.5%; width: 36px; height: 36px;" onclick="openLabelModal(event, 'Venado')">📍<span>Venado</span></div>
             </div>
         </div>
 
@@ -372,7 +386,7 @@
             <div class="filter-box">
                 <input type="text" id="filterStudent" placeholder="Filtrar por nombre de participante..." oninput="renderTeacherData()">
             </div>
-            <button class="btn-primary" style="padding: 10px; font-size: 0.85rem;" onclick="generatePDFReport()">📥 Descargar Reporte Completo en PDF</button>
+            <button class="btn-primary" style="padding: 10px; font-size: 0.85rem;" onclick="openReportPreviewModal()">📋 Ver Reporte de Redacciones</button>
             
             <div id="responsesContainer" style="display:flex; flex-direction:column; gap:10px;"></div>
         </div>
@@ -413,6 +427,22 @@
             <div class="line-counter" id="lineCounter">Líneas estimadas: 0 / 5-8</div>
 
             <button class="btn-primary" style="margin-top:15px;" onclick="submitEssay()">🚀 Enviar Redacción al Docente</button>
+        </div>
+    </div>
+
+    <!-- NUEVO MODAL DE VISTA PREVIA DEL REPORTE -->
+    <div class="modal" id="reportPreviewModal">
+        <div class="modal-content" style="max-width: 780px;">
+            <button class="close-btn" onclick="closeModal('reportPreviewModal')">&times;</button>
+            <h2>📋 Reporte Consolidado de Redacciones</h2>
+            <p style="font-size: 0.85rem; color:#ccc;">Visualiza las redacciones y observaciones registradas por cada participante de esta sala antes de generar el documento:</p>
+            
+            <div id="reportTableContainer" style="max-height: 50vh; overflow-y: auto; margin-top:10px;"></div>
+
+            <div style="display:flex; justify-content: flex-end; gap:10px; margin-top:18px;">
+                <button class="btn-primary" style="background:#555; color:#fff; width:auto; padding:10px 20px;" onclick="closeModal('reportPreviewModal')">Cerrar</button>
+                <button class="btn-primary" style="width:auto; padding:10px 20px;" onclick="downloadPDFFromPreview()">📥 Descargar Reporte en PDF</button>
+            </div>
         </div>
     </div>
 
@@ -521,7 +551,8 @@
 
         function updateLineCount() {
             const text = document.getElementById('essayInput').value;
-            const lines = text.split('\n').filter(l => l.trim() !== '').length || (text ? 1 : 0);
+            const lines = text.split('
+').filter(l => l.trim() !== '').length || (text ? 1 : 0);
             const counter = document.getElementById('lineCounter');
             counter.innerText = `Líneas estimadas: ${lines} / 5-8`;
             counter.style.color = (lines >= 5 && lines <= 8) ? '#00ff88' : '#aaa';
@@ -627,6 +658,57 @@
             }
         }
 
+        /* MOSTRAR VISTA PREVIA DEL REPORTE EN PANTALLA MODAL */
+        function openReportPreviewModal() {
+            const container = document.getElementById('reportTableContainer');
+            
+            let html = `
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>Participante</th>
+                            <th>Observaciones Puntuales</th>
+                            <th>Redacción Descriptivo-Explicativa</th>
+                            <th>Nota</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            const entries = Object.values(allResponses);
+            if (entries.length === 0) {
+                html += `<tr><td colspan="4" style="text-align:center;"><em>No hay registros disponibles en esta sala.</em></td></tr>`;
+            } else {
+                entries.forEach(resp => {
+                    let labelsText = 'Sin observaciones';
+                    if (resp.elementLabels) {
+                        labelsText = Object.entries(resp.elementLabels)
+                            .map(([k, v]) => `• <strong>${k}:</strong> ${v}`)
+                            .join('<br>');
+                    }
+
+                    html += `
+                        <tr>
+                            <td><strong>${resp.student || 'Anónimo'}</strong></td>
+                            <td>${labelsText}</td>
+                            <td>${resp.redaccion || '<em>Sin entrega aún</em>'}</td>
+                            <td><strong style="color:var(--primary);">${resp.nota ? resp.nota + '/100' : 'S/N'}</strong></td>
+                        </tr>
+                    `;
+                });
+            }
+
+            html += `</tbody></table>`;
+            container.innerHTML = html;
+            document.getElementById('reportPreviewModal').style.display = 'flex';
+        }
+
+        function downloadPDFFromPreview() {
+            generatePDFReport();
+            closeModal('reportPreviewModal');
+        }
+
+        // GENERACIÓN Y DESCARGA DEL ARCHIVO PDF CON jspdf
         function generatePDFReport() {
             if (!window.jspdf) {
                 alert('Cargando librería PDF, por favor intenta en unos segundos...');
@@ -659,7 +741,8 @@
                 if (resp.elementLabels) {
                     labelsText = Object.entries(resp.elementLabels)
                         .map(([k, v]) => `${k}: ${v}`)
-                        .join('\n');
+                        .join('
+');
                 }
 
                 tableRows.push([
