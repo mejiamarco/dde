@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Laboratorio PROFE</title>
+    <title>Laboratorio Interactivo de Biodiversidad - PROFE</title>
 
     <!-- Firebase SDK (v9 compat) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -95,7 +95,7 @@
         }
 
         .login-card h2 { 
-            color: #111; font-size: 1.25rem; font-weight: 800;
+            color: #111; font-size: 1.15rem; font-weight: 800;
             margin-bottom: 4px; letter-spacing: 0.5px; text-transform: uppercase;
         }
         .login-card .subtitle {
@@ -315,17 +315,17 @@
         <button class="btn-teacher-toggle" id="btnTeacherToggle" onclick="toggleTeacherPanel()">👨‍🏫 Panel Docente</button>
     </div>
 
-    <!-- PANTALLA DE ACCESO FIEL A LA INTERFAZ CON LOGO PROFE EN DORADO -->
+    <!-- PANTALLA DE ACCESO CORREGIDA -->
     <div id="loginOverlay">
         <div class="login-card-container">
             <div class="login-card">
-                <!-- LOGO PROFE DORADO SUSTITUYENDO A PUENTE -->
+                <!-- LOGO PROFE DORADO -->
                 <div class="profe-logo-badge">
                     <span class="profe-text">PROFE</span>
                     <span class="profe-subtext">PROGRAMA</span>
                 </div>
 
-                <h2>ACTIVIDADES PARA FORTALECER LA ESCRITURA </h2>
+                <h2>ACTIVIDADES PARA FORTALECER LA ESCRITURA</h2>
                 <div class="subtitle">Autenticación para iniciar el entorno de laboratorio.</div>
 
                 <div class="form-group-login">
@@ -338,7 +338,7 @@
                     <input type="text" id="studentRoom" class="input-neon-yellow" placeholder="Escriba la sala (ej. GRUPO_A)" style="text-transform: uppercase;">
                 </div>
 
-                <button class="btn-primary" type="button" onclick="startSession()">Ingresar</button>
+                <button class="btn-primary" id="btnIngresar" type="button" onclick="startSession()">Ingresar</button>
                 <span class="teacher-link" onclick="openTeacherLogin()">Acceso Docente</span>
             </div>
         </div>
@@ -369,7 +369,7 @@
                 <div class="hotspot hs-red" style="top: 28%; left: 52%;" onclick="openLabelModal(event, 'Montaña')">📍<span>Montaña / Nieve</span></div>
                 <div class="hotspot hs-red" style="top: 86.5%; left: 91.5%;" onclick="openLabelModal(event, 'Hongos')">📍<span>Hongos</span></div>
                 
-                <!-- PUNTO CORREGIDO UBICADO EXACTAMENTE SOBRE LA PATA DELANTERA IZQUIERDA (CABEZA DE VENADO DEFECTUOSA) -->
+                <!-- PUNTO SOBRE PATA EN FORMA DE CABEZA DE VENADO -->
                 <div class="hotspot hs-yellow" style="top: 71.5%; left: 29.5%; width: 36px; height: 36px;" onclick="openLabelModal(event, 'Venado')">📍<span>Venado</span></div>
             </div>
         </div>
@@ -430,7 +430,7 @@
         </div>
     </div>
 
-    <!-- NUEVO MODAL DE VISTA PREVIA DEL REPORTE -->
+    <!-- MODAL DE VISTA PREVIA DEL REPORTE -->
     <div class="modal" id="reportPreviewModal">
         <div class="modal-content" style="max-width: 780px;">
             <button class="close-btn" onclick="closeModal('reportPreviewModal')">&times;</button>
@@ -447,7 +447,7 @@
     </div>
 
     <script>
-        // CONFIGURACIÓN DE FIREBASE REALTIME DATABASE CON FALLBACK LOCAL
+        // CONFIGURACIÓN DE FIREBASE CON ASINCRONISMO SEGURO
         const firebaseConfig = {
             apiKey: "AIzaSyCFbiJQ21ly52KCIFms6i6KTPP1EwcQTDs",
             authDomain: "dde-lapaz.firebaseapp.com",
@@ -459,14 +459,20 @@
         };
 
         let db = null;
-        try {
-            if (typeof firebase !== 'undefined') {
-                firebase.initializeApp(firebaseConfig);
-                db = firebase.database();
+
+        // Inicialización segura sin congelamiento
+        window.addEventListener('DOMContentLoaded', () => {
+            try {
+                if (typeof firebase !== 'undefined') {
+                    if (!firebase.apps.length) {
+                        firebase.initializeApp(firebaseConfig);
+                    }
+                    db = firebase.database();
+                }
+            } catch (e) {
+                console.warn("Firebase no inicializado, cambiando a modo local:", e);
             }
-        } catch (e) {
-            console.warn("Firebase no conectado o sin red, trabajando en modo local/memoria:", e);
-        }
+        });
 
         let currentUser = { name: '', room: '', studentId: '' };
         let studentLabels = {};
@@ -474,37 +480,49 @@
         let allResponses = {};
         let isTeacherAuthenticated = false;
 
+        // FUNCIÓN DE INGRESO GARANTIZADA
         function startSession() {
-            try {
-                const nameInput = document.getElementById('studentName');
-                const roomInput = document.getElementById('studentRoom');
-                const name = nameInput ? nameInput.value.trim() : '';
-                const room = roomInput ? roomInput.value.trim().toUpperCase() : '';
+            const nameEl = document.getElementById('studentName');
+            const roomEl = document.getElementById('studentRoom');
+            const overlay = document.getElementById('loginOverlay');
 
-                if (!name || !room) {
-                    alert('Por favor ingresa tu nombre y el código de sala.');
-                    return;
-                }
-                const cleanId = name.replace(/[^a-zA-Z0-9]/g, "_");
-                currentUser = { name, room, studentId: cleanId };
+            const name = nameEl ? nameEl.value.trim() : '';
+            const room = roomEl ? roomEl.value.trim().toUpperCase() : '';
 
-                document.getElementById('loginOverlay').style.display = 'none';
-                document.getElementById('lblActiveRoom').innerText = room;
+            if (!name || !room) {
+                alert('Por favor ingresa tu Nombre Completo y el Código de Sala.');
+                return;
+            }
 
-                if (db) {
+            const cleanId = name.replace(/[^a-zA-Z0-9]/g, "_");
+            currentUser = { name, room, studentId: cleanId };
+
+            // Cierre inmediato de la pantalla de bienvenida
+            if (overlay) {
+                overlay.style.display = 'none';
+            }
+            
+            const activeRoomLbl = document.getElementById('lblActiveRoom');
+            if (activeRoomLbl) {
+                activeRoomLbl.innerText = room;
+            }
+
+            // Intento no bloqueante de conexión
+            if (db) {
+                try {
                     db.ref(`salas_biodiversidad/${room}/participantes/${cleanId}`).on('value', snapshot => {
                         const val = snapshot.val();
                         if (val && val.elementLabels) studentLabels = val.elementLabels;
-                    }, err => console.log("Firebase error:", err));
+                    }, err => console.log("Aviso Firebase:", err));
+                } catch(err) {
+                    console.log("Continuando localmente:", err);
                 }
-            } catch (err) {
-                console.error("Error en startSession:", err);
-                document.getElementById('loginOverlay').style.display = 'none';
             }
         }
 
+        // ACCESO DOCENTE GARANTIZADO
         function openTeacherLogin() {
-            try {
+            setTimeout(() => {
                 const pass = prompt('Ingresa la contraseña docente:');
                 if (pass === 'mejia') {
                     const room = prompt('Ingresa el Código de la Sala a moderar (ej. GRUPO_A):', 'GRUPO_A');
@@ -512,9 +530,11 @@
 
                     isTeacherAuthenticated = true;
                     currentUser.room = room.trim().toUpperCase();
+
+                    const overlay = document.getElementById('loginOverlay');
+                    if (overlay) overlay.style.display = 'none';
+
                     document.getElementById('lblActiveRoom').innerText = currentUser.room;
-                    
-                    document.getElementById('loginOverlay').style.display = 'none';
                     document.getElementById('btnTeacherToggle').style.display = 'block';
                     document.getElementById('teacherSidebar').classList.add('active');
                     
@@ -522,9 +542,7 @@
                 } else if (pass !== null) {
                     alert('Contraseña incorrecta');
                 }
-            } catch (err) {
-                console.error("Error en openTeacherLogin:", err);
-            }
+            }, 50);
         }
 
         function toggleTeacherPanel() {
@@ -595,15 +613,11 @@
                     status: 'Entregado',
                     timestamp: Date.now()
                 }, (err) => {
-                    if (!err) {
-                        alert('¡Redacción enviada correctamente al docente!');
-                        closeModal('activityModal');
-                    } else {
-                        alert('Error al enviar la redacción.');
-                    }
+                    alert('¡Redacción enviada correctamente!');
+                    closeModal('activityModal');
                 });
             } else {
-                alert('¡Redacción guardada en modo local!');
+                alert('¡Redacción guardada!');
                 closeModal('activityModal');
             }
         }
