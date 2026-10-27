@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Laboratorio Interactivo de Biodiversidad - PROFE</title>
+    <title>Laboratorio - PROFE</title>
 
     <!-- Firebase SDK (v9 compat) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -326,7 +326,7 @@
                 </div>
 
                 <h2>EVALUACIÓN DIAGNÓSTICA</h2>
-                <div class="subtitle">Autenticación para iniciar el entorno de laboratorio.</div>
+                <div class="subtitle">Autenticación para iniciar.</div>
 
                 <div class="form-group-login">
                     <label>NOMBRE COMPLETO / REGISTRO</label>
@@ -338,7 +338,7 @@
                     <input type="text" id="studentRoom" class="input-neon-yellow" placeholder="Escriba la sala (ej. GRUPO_A)" style="text-transform: uppercase;">
                 </div>
 
-                <button class="btn-primary" onclick="startSession()">Ingresar a la Experiencia</button>
+                <button class="btn-primary" onclick="startSession()">Ingresar</button>
                 <span class="teacher-link" onclick="openTeacherLogin()">Acceso Docente</span>
             </div>
         </div>
@@ -363,7 +363,7 @@
                 <div class="hotspot hs-red" style="top: 62%; left: 45%;" onclick="openLabelModal(event, 'Río')">📍<span>Río</span></div>
                 <div class="hotspot hs-green" style="top: 22%; left: 33%;" onclick="openLabelModal(event, 'Árbol')">📍<span>Árbol</span></div>
                 <div class="hotspot hs-yellow" style="top: 73%; left: 24%;" onclick="openLabelModal(event, 'Víbora')">📍<span>Víbora</span></div>
-                <div class="hotspot hs-red" style="top: 25%; left: 54%;" onclick="openLabelModal(event, 'Insectos')">📍<span>Insectos</span></div>
+                <div class="hotspot hs-red" style="top: 25%; left: 52%;" onclick="openLabelModal(event, 'Insectos')">📍<span>Insectos</span></div>
                 <div class="hotspot hs-green" style="top: 83%; left: 34%;" onclick="openLabelModal(event, 'Peces')">📍<span>Peces</span></div>
                 <div class="hotspot hs-yellow" style="top: 65%; left: 57%;" onclick="openLabelModal(event, 'Capibara')">📍<span>Capibara</span></div>
                 <div class="hotspot hs-red" style="top: 23%; left: 62%;" onclick="openLabelModal(event, 'Montaña')">📍<span>Montaña / Nieve</span></div>
@@ -375,7 +375,7 @@
         <!-- PANEL LATERAL DERECHO DEL DOCENTE -->
         <div class="teacher-sidebar" id="teacherSidebar">
             <div class="sidebar-header">
-                <h3>👨‍🏫 Panel Docente en Vivo</h3>
+                <h3>👨‍🏫 Panel Docente</h3>
                 <button onclick="toggleTeacherPanel()" style="background:none; border:none; color:#fff; cursor:pointer; font-size:1.2rem;">✖</button>
             </div>
             <div style="font-size: 0.8rem; color: var(--primary);">
